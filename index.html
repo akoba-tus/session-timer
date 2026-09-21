@@ -130,6 +130,20 @@
   .presets { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 0 4px; }
   .presets button { flex: none; min-height: 52px; padding: 10px 18px; }
   .done { width: 100%; margin-top: 18px; background: rgba(244, 241, 232, .12); }
+  .icon { flex: .45; font-size: 1.3rem; }
+  .manual { color: var(--ivory); font-size: 1.02rem; line-height: 1.7; }
+  .manual h3 {
+    font-size: .95rem; font-weight: 500; letter-spacing: .04em;
+    color: var(--dim); margin: 22px 0 8px; text-transform: none;
+  }
+  .manual h3:first-child { margin-top: 0; }
+  .manual ul { margin: 0; padding-left: 1.1em; }
+  .manual li { margin: 6px 0; }
+  .manual b { font-weight: 600; }
+  .swatch {
+    display: inline-block; width: .72em; height: .72em; border-radius: 3px;
+    margin-right: .35em; vertical-align: baseline;
+  }
   .note { color: var(--dim); font-size: .9rem; margin: 14px 0 0; line-height: 1.6; }
 </style>
 </head>
@@ -148,6 +162,7 @@
     <button id="advance" disabled>Q&amp;A</button>
     <button class="ghost" id="reset">Reset</button>
     <button class="ghost" id="open">Settings</button>
+    <button class="ghost icon" id="help" aria-label="Help">?</button>
   </div>
 </div>
 
@@ -201,7 +216,10 @@
 
     <div class="row">
       <p id="s-sound"></p>
-      <button class="toggle" id="t-sound" aria-pressed="true"></button>
+      <div class="pair">
+        <button id="test"></button>
+        <button class="toggle" id="t-sound" aria-pressed="true"></button>
+      </div>
     </div>
 
     <div class="row">
@@ -214,11 +232,19 @@
       <button data-preset="15,3,5,1"></button>
       <button data-preset="20,5,5,1"></button>
       <button data-preset="8,1,2,0"></button>
-      <button id="test"></button>
     </div>
 
     <button class="done" id="close"></button>
     <p class="note" id="s-note"></p>
+  </div>
+</div>
+
+<div class="sheet" id="help-sheet" role="dialog" aria-modal="true">
+  <div class="panel">
+    <h2 id="h-title"></h2>
+    <div class="manual" id="h-body"></div>
+    <button class="done" id="h-test"></button>
+    <button class="done" id="h-close"></button>
   </div>
 </div>
 
@@ -246,8 +272,36 @@
       autoRow: "質疑へ自動で移る<small>切ると「質疑へ」を押すまで超過時間を表示</small>",
       autoOn: "自動", autoOff: "手動",
       preset: function (a, b) { return a + "＋" + b + "分"; },
-      test: "ベルを試す",
-      note: "設定はこの端末に保存されます。本番前に一度「ベルを試す」を押して、音量とマナーモードを確認してください。"
+      test: "試聴",
+      note: "設定はこの端末に保存されます。本番前に一度「試聴」を押して、音量とマナーモードを確認してください。",
+      hTitle: "使い方",
+      hClose: "閉じる",
+      hTest: "ベルを鳴らして音量を確認",
+      hBody: [
+        "<h3>進行</h3><ul>",
+        "<li><b>開始</b>を押すと発表のカウントダウンが始まります</li>",
+        "<li>終了が近づくと予鈴が1回鳴り、画面が琥珀色になります</li>",
+        "<li>発表終了でベル2回。そのまま質疑のタイマーに切り替わります</li>",
+        "<li>質疑終了でベル3回。以降は赤字で超過時間をカウントアップします</li>",
+        "<li>早く終わったときは<b>質疑へ</b>で先に進めます</li>",
+        "</ul>",
+        "<h3>画面の色</h3><ul>",
+        "<li><span class='swatch' style='background:#7fd6c2'></span>紺 … 通常</li>",
+        "<li><span class='swatch' style='background:#e8a33d'></span>琥珀 … まもなく終了</li>",
+        "<li><span class='swatch' style='background:#ff5a5a'></span>赤 … 時間切れ・超過中</li>",
+        "<li>発表者は数字を読まなくても、色の変化で気づけます</li>",
+        "</ul>",
+        "<h3>本番前の確認</h3><ul>",
+        "<li>下の<b>ベルを鳴らして音量を確認</b>を一度押してください（iOSは一度タップするまで音が出ません）</li>",
+        "<li>マナーモードがオンだと鳴りません</li>",
+        "<li>自動ロックを「なし」にしてください</li>",
+        "<li>時間の変更は<b>設定</b>から。この端末に保存されます</li>",
+        "</ul>",
+        "<h3>その他</h3><ul>",
+        "<li><b>リセット</b>は誤操作防止のため2回タップです</li>",
+        "<li>外付けキーボードならスペースキーで開始・一時停止できます</li>",
+        "</ul>"
+      ].join("")
     },
     en: {
       ready: "Ready", talk: "Talk", qa: "Questions", paused: " — paused",
@@ -268,8 +322,36 @@
       autoRow: "Start questions automatically<small>if off, overtime is shown until you tap Q&amp;A</small>",
       autoOn: "Auto", autoOff: "Manual",
       preset: function (a, b) { return a + "+" + b + " min"; },
-      test: "Test bell",
-      note: "Settings are stored on this device. Tap “Test bell” once before the session to check the volume and the silent switch."
+      test: "Test",
+      note: "Settings are stored on this device. Tap “Test” once before the session to check the volume and the silent switch.",
+      hTitle: "How to use",
+      hClose: "Close",
+      hTest: "Ring the bell to check the volume",
+      hBody: [
+        "<h3>Running a session</h3><ul>",
+        "<li><b>Start</b> begins the countdown for the talk</li>",
+        "<li>One bell and an amber screen warn that the end is near</li>",
+        "<li>Two bells at the end of the talk; the discussion timer starts automatically</li>",
+        "<li>Three bells at the end of the discussion, then overtime counts up in red</li>",
+        "<li><b>Q&amp;A</b> moves on early if the speaker finishes ahead of time</li>",
+        "</ul>",
+        "<h3>Screen colours</h3><ul>",
+        "<li><span class='swatch' style='background:#7fd6c2'></span>Navy — running normally</li>",
+        "<li><span class='swatch' style='background:#e8a33d'></span>Amber — nearly out of time</li>",
+        "<li><span class='swatch' style='background:#ff5a5a'></span>Red — time is up, counting over</li>",
+        "<li>The speaker notices the colour without having to read the digits</li>",
+        "</ul>",
+        "<h3>Before the session</h3><ul>",
+        "<li>Tap <b>Ring the bell to check the volume</b> below — on iOS no sound plays until the page has been tapped once</li>",
+        "<li>The bell is silent if the device is on silent mode</li>",
+        "<li>Set auto-lock to Never</li>",
+        "<li>Change the times in <b>Settings</b>; they are stored on this device</li>",
+        "</ul>",
+        "<h3>Also</h3><ul>",
+        "<li><b>Reset</b> needs two taps, so a running timer is not lost by accident</li>",
+        "<li>With a keyboard attached, the space bar starts and pauses</li>",
+        "</ul>"
+      ].join("")
     }
   };
 
@@ -285,7 +367,8 @@
   var el = {};
   ["clock", "phase", "next", "fuse", "go", "advance", "reset", "open", "close", "sheet", "test",
    "s-title", "s-lang", "s-talk", "s-talkBell", "s-qa", "s-qaBell", "s-sound", "s-auto", "s-note",
-   "t-sound", "t-auto", "lang-ja", "lang-en"].forEach(function (id) { el[id] = document.getElementById(id); });
+   "t-sound", "t-auto", "lang-ja", "lang-en",
+   "help", "help-sheet", "h-title", "h-body", "h-test", "h-close"].forEach(function (id) { el[id] = document.getElementById(id); });
 
   var phase = "idle", running = false, deadline = 0, left = 0, total = 0;
   var rangWarn = false, rangEnd = false, resetArmed = 0;
@@ -430,6 +513,10 @@
     el["s-note"].textContent = t.note;
     el.close.textContent = t.close;
     el.test.textContent = t.test;
+    el["h-title"].textContent = t.hTitle;
+    el["h-body"].innerHTML = t.hBody;
+    el["h-test"].textContent = t.hTest;
+    el["h-close"].textContent = t.hClose;
     el.open.textContent = t.settings;
     el.advance.textContent = t.toQa;
     if (Date.now() > resetArmed) el.reset.textContent = t.reset;
@@ -475,11 +562,14 @@
   el.test.addEventListener("click", function () { audio(); bell(1); });
   el.open.addEventListener("click", function () { el.sheet.setAttribute("open", ""); syncPanel(); });
   el.close.addEventListener("click", function () { el.sheet.removeAttribute("open"); });
+  el.help.addEventListener("click", function () { el["help-sheet"].setAttribute("open", ""); syncPanel(); });
+  el["h-close"].addEventListener("click", function () { el["help-sheet"].removeAttribute("open"); });
+  el["h-test"].addEventListener("click", function () { audio(); bell(1); });
 
   document.addEventListener("keydown", function (e) {
     if (e.code === "Space") { e.preventDefault(); el.go.click(); }
     if (e.key === "n" || e.key === "N") { if (!el.advance.disabled) el.advance.click(); }
-    if (e.key === "Escape") el.sheet.removeAttribute("open");
+    if (e.key === "Escape") { el.sheet.removeAttribute("open"); el["help-sheet"].removeAttribute("open"); }
   });
 
   syncPanel();
