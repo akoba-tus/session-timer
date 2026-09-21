@@ -17,7 +17,6 @@
     padding-right: env(safe-area-inset-right, 0px);
 
     --ink: #131a2b;
-    --ink-soft: #1c2437;
     --ivory: #f4f1e8;
     --dim: #8c93a6;
     --line: rgba(244, 241, 232, .16);
@@ -56,36 +55,12 @@
     --label: #d08d8d;
   }
 
-  .screen {
-    height: 100%;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    align-items: center;
-  }
+  .screen { height: 100%; display: grid; grid-template-rows: auto 1fr auto; align-items: center; }
 
-  .fuse {
-    height: 10px;
-    width: 100%;
-    background: rgba(244, 241, 232, .09);
-    flex: none;
-  }
-  .fuse span {
-    display: block;
-    height: 100%;
-    width: 100%;
-    background: var(--bar);
-    transform-origin: left center;
-    transition: background-color .45s ease;
-  }
+  .fuse { height: 10px; width: 100%; background: rgba(244, 241, 232, .09); }
+  .fuse span { display: block; height: 100%; width: 100%; background: var(--bar); transition: background-color .45s ease; }
 
-  .stage {
-    display: grid;
-    align-content: center;
-    justify-items: center;
-    gap: .2em;
-    padding: 0 4vw;
-    min-height: 0;
-  }
+  .stage { display: grid; align-content: center; justify-items: center; gap: .25em; padding: 0 4vw; min-height: 0; }
   .phase {
     font-size: clamp(1.1rem, 4.2vmin, 2.6rem);
     font-weight: 500;
@@ -104,21 +79,10 @@
   }
   body[data-state="over"] .clock { animation: breathe 1.6s ease-in-out infinite; }
   @keyframes breathe { 50% { opacity: .45; } }
-  @media (prefers-reduced-motion: reduce) {
-    body[data-state="over"] .clock { animation: none; }
-  }
-  .next {
-    font-size: clamp(.95rem, 3vmin, 1.7rem);
-    color: var(--label);
-    transition: color .45s ease;
-  }
+  @media (prefers-reduced-motion: reduce) { body[data-state="over"] .clock { animation: none; } }
+  .next { font-size: clamp(.95rem, 3vmin, 1.7rem); color: var(--label); transition: color .45s ease; text-align: center; }
 
-  .desk {
-    display: flex;
-    gap: 10px;
-    padding: 12px max(14px, 2vw) 16px;
-    border-top: 1px solid var(--line);
-  }
+  .desk { display: flex; gap: 10px; padding: 12px max(14px, 2vw) 16px; border-top: 1px solid var(--line); }
   button {
     font: inherit;
     font-size: clamp(1rem, 2.4vmin, 1.35rem);
@@ -136,52 +100,33 @@
   button:active { background: rgba(244, 241, 232, .2); }
   button:focus-visible { outline: 3px solid var(--bar); outline-offset: 2px; }
   button[disabled] { opacity: .3; }
-  .primary {
-    flex: 2.2;
-    background: var(--bar);
-    color: #12182a;
-    border-color: transparent;
-    font-weight: 600;
-  }
+  .primary { flex: 2.2; background: var(--bar); color: #12182a; border-color: transparent; font-weight: 600; }
   .ghost { flex: .9; color: var(--label); }
 
   .sheet {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: rgba(8, 11, 20, .94);
-    display: none;
-    place-items: center;
+    display: none; place-items: center;
     padding: max(20px, env(safe-area-inset-top, 0px)) 20px 20px;
     overflow-y: auto;
   }
   .sheet[open] { display: grid; }
   .panel { width: min(680px, 100%); }
-  .panel h2 {
-    font-size: 1.3rem;
-    font-weight: 500;
-    margin: 0 0 18px;
-    color: var(--ivory);
-  }
+  .panel h2 { font-size: 1.3rem; font-weight: 500; margin: 0 0 18px; color: var(--ivory); }
   .row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(244, 241, 232, .1);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid rgba(244, 241, 232, .1);
   }
   .row p { margin: 0; font-size: 1.15rem; color: var(--ivory); }
   .row small { display: block; color: var(--dim); font-size: .95rem; }
   .stepper { display: flex; align-items: center; gap: 6px; flex: none; }
   .stepper button { min-height: 48px; width: 54px; flex: none; font-size: 1.4rem; padding: 0; }
-  .stepper output {
-    min-width: 76px;
-    text-align: center;
-    font-size: 1.5rem;
-    font-variant-numeric: tabular-nums;
-  }
-  .toggle { min-height: 48px; width: 112px; flex: none; }
+  .stepper output { min-width: 76px; text-align: center; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+  .toggle { min-height: 48px; width: 116px; flex: none; }
   .toggle[aria-pressed="true"] { background: var(--accent); color: #12182a; border-color: transparent; }
+  .pair { display: flex; gap: 6px; flex: none; }
+  .pair button { min-height: 48px; width: 92px; flex: none; }
+  .pair button[aria-pressed="true"] { background: var(--accent); color: #12182a; border-color: transparent; }
   .presets { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 0 4px; }
   .presets button { flex: none; min-height: 52px; padding: 10px 18px; }
   .done { width: 100%; margin-top: 18px; background: rgba(244, 241, 232, .12); }
@@ -195,77 +140,85 @@
   <main class="stage">
     <div class="phase" id="phase">Ready</div>
     <div class="clock" id="clock">12:00</div>
-    <div class="next" id="next">Talk 12 min, then questions 3 min</div>
+    <div class="next" id="next"></div>
   </main>
 
   <div class="desk">
-    <button class="primary" id="go">開始</button>
-    <button id="advance" disabled>質疑へ</button>
-    <button class="ghost" id="reset">リセット</button>
-    <button class="ghost" id="open">設定</button>
+    <button class="primary" id="go">Start</button>
+    <button id="advance" disabled>Q&amp;A</button>
+    <button class="ghost" id="reset">Reset</button>
+    <button class="ghost" id="open">Settings</button>
   </div>
 </div>
 
-<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="設定">
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
   <div class="panel">
-    <h2>設定</h2>
+    <h2 id="s-title">Settings</h2>
 
     <div class="row">
-      <p>発表<small>持ち時間</small></p>
+      <p id="s-lang"></p>
+      <div class="pair">
+        <button id="lang-ja" aria-pressed="true">日本語</button>
+        <button id="lang-en" aria-pressed="false">English</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <p id="s-talk"></p>
       <div class="stepper">
-        <button data-step="talk,-1" aria-label="発表を1分減らす">−</button>
+        <button data-step="talk,-1">−</button>
         <output id="v-talk">12</output>
-        <button data-step="talk,1" aria-label="発表を1分増やす">＋</button>
+        <button data-step="talk,1">＋</button>
       </div>
     </div>
 
     <div class="row">
-      <p>発表の予鈴<small>残り何分で鳴らすか</small></p>
+      <p id="s-talkBell"></p>
       <div class="stepper">
-        <button data-step="talkBell,-1" aria-label="予鈴を1分早める">−</button>
+        <button data-step="talkBell,-1">−</button>
         <output id="v-talkBell">2</output>
-        <button data-step="talkBell,1" aria-label="予鈴を1分遅らせる">＋</button>
+        <button data-step="talkBell,1">＋</button>
       </div>
     </div>
 
     <div class="row">
-      <p>質疑<small>持ち時間</small></p>
+      <p id="s-qa"></p>
       <div class="stepper">
-        <button data-step="qa,-1" aria-label="質疑を1分減らす">−</button>
+        <button data-step="qa,-1">−</button>
         <output id="v-qa">3</output>
-        <button data-step="qa,1" aria-label="質疑を1分増やす">＋</button>
+        <button data-step="qa,1">＋</button>
       </div>
     </div>
 
     <div class="row">
-      <p>質疑の予鈴<small>残り何分で鳴らすか</small></p>
+      <p id="s-qaBell"></p>
       <div class="stepper">
-        <button data-step="qaBell,-1" aria-label="質疑の予鈴を1分早める">−</button>
-        <output id="v-qaBell">1</output>
-        <button data-step="qaBell,1" aria-label="質疑の予鈴を1分遅らせる">＋</button>
+        <button data-step="qaBell,-1">−</button>
+        <output id="v-qaBell">0</output>
+        <button data-step="qaBell,1">＋</button>
       </div>
     </div>
 
     <div class="row">
-      <p>ベル音<small>予鈴1回／発表終了2回／質疑終了3回</small></p>
-      <button class="toggle" id="t-sound" aria-pressed="true">鳴らす</button>
+      <p id="s-sound"></p>
+      <button class="toggle" id="t-sound" aria-pressed="true"></button>
     </div>
 
     <div class="row">
-      <p>質疑へ自動で移る<small>切ると「質疑へ」を押すまで超過時間を表示</small></p>
-      <button class="toggle" id="t-auto" aria-pressed="false">手動</button>
+      <p id="s-auto"></p>
+      <button class="toggle" id="t-auto" aria-pressed="true"></button>
     </div>
 
-    <div class="presets">
-      <button data-preset="12,2,3,1">12＋3分</button>
-      <button data-preset="15,3,5,1">15＋5分</button>
-      <button data-preset="20,5,5,1">20＋5分</button>
-      <button data-preset="8,1,2,1">8＋2分</button>
-      <button id="test">ベルを試す</button>
+    <div class="presets" id="presets">
+      <button data-preset="12,2,3,0"></button>
+      <button data-preset="15,3,5,1"></button>
+      <button data-preset="20,5,5,1"></button>
+      <button data-preset="8,1,2,0"></button>
+      <button id="test"></button>
     </div>
 
-    <button class="done" id="close">閉じる</button>
-    <p class="note">設定はこのiPadに保存されます。本番前に一度「ベルを試す」を押しておくと、iOSの制限で音が出ない事故を防げます。</p>
+    <button class="done" id="close"></button>
+    <p class="note" id="s-note"></p>
   </div>
 </div>
 
@@ -273,44 +226,71 @@
 (function () {
   "use strict";
 
-  var DEFAULTS = { talk: 12, talkBell: 2, qa: 3, qaBell: 0, sound: true, auto: true };
-  var S = Object.assign({}, DEFAULTS);
-
-  try {
-    var saved = localStorage.getItem("session-timer-v2");
-    if (saved) S = Object.assign(S, JSON.parse(saved));
-  } catch (e) { /* 保存が使えなくても既定値で動く */ }
-
-  function save() {
-    try { localStorage.setItem("session-timer-v2", JSON.stringify(S)); } catch (e) {}
-  }
-
-  var el = {
-    body: document.body,
-    clock: document.getElementById("clock"),
-    phase: document.getElementById("phase"),
-    next: document.getElementById("next"),
-    fuse: document.getElementById("fuse"),
-    go: document.getElementById("go"),
-    advance: document.getElementById("advance"),
-    reset: document.getElementById("reset"),
-    open: document.getElementById("open"),
-    close: document.getElementById("close"),
-    sheet: document.getElementById("sheet"),
-    sound: document.getElementById("t-sound"),
-    auto: document.getElementById("t-auto"),
-    test: document.getElementById("test")
+  var T = {
+    ja: {
+      ready: "準備", talk: "発表", qa: "質疑", paused: "（一時停止）",
+      plan: function (s) { return "発表 " + s.talk + " 分 ／ 質疑 " + s.qa + " 分"; },
+      qaFollow: function (s) { return "このあと質疑 " + s.qa + " 分"; },
+      talkOver: function (s) { return "時間です — 次は質疑 " + s.qa + " 分"; },
+      qaRun: "セッション最後のパートです", qaOver: "終了してください",
+      start: "開始", pause: "一時停止", resume: "再開", toQa: "質疑へ",
+      reset: "リセット", resetConfirm: "もう一度でリセット", settings: "設定", close: "閉じる",
+      sTitle: "設定",
+      lang: "言語<small>Language</small>",
+      talkRow: "発表<small>持ち時間（分）</small>",
+      talkBellRow: "発表の予鈴<small>残り何分で鳴らすか（0で無し）</small>",
+      qaRow: "質疑<small>持ち時間（分）</small>",
+      qaBellRow: "質疑の予鈴<small>残り何分で鳴らすか（0で無し）</small>",
+      soundRow: "ベル音<small>予鈴1回／発表終了2回／質疑終了3回</small>",
+      soundOn: "鳴らす", soundOff: "鳴らさない",
+      autoRow: "質疑へ自動で移る<small>切ると「質疑へ」を押すまで超過時間を表示</small>",
+      autoOn: "自動", autoOff: "手動",
+      preset: function (a, b) { return a + "＋" + b + "分"; },
+      test: "ベルを試す",
+      note: "設定はこの端末に保存されます。本番前に一度「ベルを試す」を押して、音量とマナーモードを確認してください。"
+    },
+    en: {
+      ready: "Ready", talk: "Talk", qa: "Questions", paused: " — paused",
+      plan: function (s) { return "Talk " + s.talk + " min · Questions " + s.qa + " min"; },
+      qaFollow: function (s) { return "Questions " + s.qa + " min to follow"; },
+      talkOver: function (s) { return "Time is up — questions " + s.qa + " min next"; },
+      qaRun: "Last part of the session", qaOver: "Please close the session",
+      start: "Start", pause: "Pause", resume: "Resume", toQa: "Q&A",
+      reset: "Reset", resetConfirm: "Tap again to reset", settings: "Settings", close: "Close",
+      sTitle: "Settings",
+      lang: "Language<small>言語</small>",
+      talkRow: "Talk<small>length in minutes</small>",
+      talkBellRow: "Talk warning<small>minutes before the end (0 = off)</small>",
+      qaRow: "Questions<small>length in minutes</small>",
+      qaBellRow: "Questions warning<small>minutes before the end (0 = off)</small>",
+      soundRow: "Bell<small>1 warning · 2 end of talk · 3 end of session</small>",
+      soundOn: "On", soundOff: "Off",
+      autoRow: "Start questions automatically<small>if off, overtime is shown until you tap Q&amp;A</small>",
+      autoOn: "Auto", autoOff: "Manual",
+      preset: function (a, b) { return a + "+" + b + " min"; },
+      test: "Test bell",
+      note: "Settings are stored on this device. Tap “Test bell” once before the session to check the volume and the silent switch."
+    }
   };
 
-  var phase = "idle";      // idle | talk | qa
-  var running = false;
-  var deadline = 0;        // epoch ms
-  var left = 0;            // ms remaining while paused
-  var total = 0;           // ms of current phase
-  var rangWarn = false, rangEnd = false;
-  var resetArmed = 0;
+  var DEFAULTS = { talk: 12, talkBell: 2, qa: 3, qaBell: 0, sound: true, auto: true, lang: "ja" };
+  var S = Object.assign({}, DEFAULTS);
+  try {
+    var saved = localStorage.getItem("session-timer-v3");
+    if (saved) S = Object.assign(S, JSON.parse(saved));
+  } catch (e) {}
+  function save() { try { localStorage.setItem("session-timer-v3", JSON.stringify(S)); } catch (e) {} }
+  function L() { return T[S.lang] || T.ja; }
 
-  /* ---------- ベル ---------- */
+  var el = {};
+  ["clock", "phase", "next", "fuse", "go", "advance", "reset", "open", "close", "sheet", "test",
+   "s-title", "s-lang", "s-talk", "s-talkBell", "s-qa", "s-qaBell", "s-sound", "s-auto", "s-note",
+   "t-sound", "t-auto", "lang-ja", "lang-en"].forEach(function (id) { el[id] = document.getElementById(id); });
+
+  var phase = "idle", running = false, deadline = 0, left = 0, total = 0;
+  var rangWarn = false, rangEnd = false, resetArmed = 0;
+
+  /* ---- bell ---- */
   var ac = null;
   function audio() {
     if (!ac) {
@@ -336,12 +316,9 @@
       o.start(t); o.stop(t + 2);
     });
   }
-  function bell(times) {
-    if (!S.sound) return;
-    for (var i = 0; i < times; i++) strike(i * 0.62);
-  }
+  function bell(n) { if (S.sound) for (var i = 0; i < n; i++) strike(i * 0.62); }
 
-  /* ---------- 画面を消さない ---------- */
+  /* ---- keep the screen on ---- */
   var lock = null;
   function keepAwake() {
     if (!navigator.wakeLock || lock) return;
@@ -354,52 +331,40 @@
     if (document.visibilityState === "visible" && running) keepAwake();
   });
 
-  /* ---------- 表示 ---------- */
+  /* ---- display ---- */
   function fmt(ms) {
     var over = ms < 0;
-    var s = Math.floor((Math.abs(ms) + 999) / 1000);
-    if (over) s = Math.floor(Math.abs(ms) / 1000);
+    var s = over ? Math.floor(-ms / 1000) : Math.floor((ms + 999) / 1000);
     var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
-    var body = (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(sec).padStart(2, "0");
-    return (over ? "+" : "") + body;
-  }
-
-  function label() {
-    if (phase === "talk") return "Talk";
-    if (phase === "qa") return "Questions";
-    return "Ready";
+    return (over ? "+" : "") + (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(sec).padStart(2, "0");
   }
 
   function paint() {
+    var t = L();
     var ms = running ? deadline - Date.now() : left;
 
     if (phase === "idle") {
       el.clock.textContent = fmt(S.talk * 60000);
-      el.phase.textContent = "Ready";
-      el.next.textContent = "Talk " + S.talk + " min, then questions " + S.qa + " min";
+      el.phase.textContent = t.ready;
+      el.next.textContent = t.plan(S);
       el.fuse.style.width = "100%";
-      el.body.dataset.state = "calm";
+      document.body.dataset.state = "calm";
+      el.go.textContent = t.start;
+      el.advance.disabled = true;
       return;
     }
 
     el.clock.textContent = fmt(ms);
-    el.phase.textContent = running ? label() : label() + " — paused";
+    el.phase.textContent = (phase === "talk" ? t.talk : t.qa) + (running ? "" : t.paused);
 
     var warnMs = (phase === "talk" ? S.talkBell : S.qaBell) * 60000;
-    var state = ms <= 0 ? "over" : (ms <= warnMs ? "warn" : "calm");
-    el.body.dataset.state = state;
+    document.body.dataset.state = ms <= 0 ? "over" : (warnMs > 0 && ms <= warnMs ? "warn" : "calm");
 
-    if (phase === "talk") {
-      el.next.textContent = ms <= 0 ? "Time is up — questions " + S.qa + " min next"
-                                    : "Questions " + S.qa + " min to follow";
-    } else {
-      el.next.textContent = ms <= 0 ? "Please close the session" : "Last part of the session";
-    }
+    if (phase === "talk") el.next.textContent = ms <= 0 ? t.talkOver(S) : t.qaFollow(S);
+    else el.next.textContent = ms <= 0 ? t.qaOver : t.qaRun;
 
-    var pct = Math.max(0, Math.min(1, ms / total));
-    el.fuse.style.width = (ms <= 0 ? 100 : pct * 100) + "%";
-
-    el.go.textContent = running ? "一時停止" : "再開";
+    el.fuse.style.width = (ms <= 0 ? 100 : Math.max(0, Math.min(1, ms / total)) * 100) + "%";
+    el.go.textContent = running ? t.pause : t.resume;
     el.advance.disabled = (phase !== "talk");
   }
 
@@ -407,8 +372,7 @@
     if (!running) return;
     var ms = deadline - Date.now();
     var warnMs = (phase === "talk" ? S.talkBell : S.qaBell) * 60000;
-
-    if (!rangWarn && ms <= warnMs && ms > 0) { rangWarn = true; bell(1); }
+    if (!rangWarn && warnMs > 0 && ms <= warnMs && ms > 0) { rangWarn = true; bell(1); }
     if (!rangEnd && ms <= 0) {
       rangEnd = true;
       bell(phase === "talk" ? 2 : 3);
@@ -423,23 +387,14 @@
     total = (p === "talk" ? S.talk : S.qa) * 60000;
     deadline = Date.now() + total;
     left = total;
-    rangWarn = false; rangEnd = false;
-    running = true;
-    audio();
-    keepAwake();
-    paint();
+    rangWarn = false; rangEnd = false; running = true;
+    audio(); keepAwake(); paint();
   }
 
   el.go.addEventListener("click", function () {
     if (phase === "idle") { start("talk"); return; }
-    if (running) {
-      left = deadline - Date.now();
-      running = false;
-    } else {
-      deadline = Date.now() + left;
-      running = true;
-      keepAwake();
-    }
+    if (running) { left = deadline - Date.now(); running = false; }
+    else { deadline = Date.now() + left; running = true; keepAwake(); }
     paint();
   });
 
@@ -448,35 +403,56 @@
   el.reset.addEventListener("click", function () {
     if (Date.now() > resetArmed) {
       resetArmed = Date.now() + 4000;
-      el.reset.textContent = "もう一度でリセット";
-      setTimeout(function () { el.reset.textContent = "リセット"; }, 4000);
+      el.reset.textContent = L().resetConfirm;
+      setTimeout(function () { if (Date.now() > resetArmed) el.reset.textContent = L().reset; }, 4100);
       return;
     }
     resetArmed = 0;
-    el.reset.textContent = "リセット";
+    el.reset.textContent = L().reset;
     phase = "idle"; running = false; left = 0;
-    el.go.textContent = "開始";
     paint();
   });
 
-  /* ---------- 設定 ---------- */
+  /* ---- settings ---- */
   var limits = { talk: [1, 90], talkBell: [0, 30], qa: [0, 60], qaBell: [0, 30] };
 
   function syncPanel() {
+    var t = L();
+    document.documentElement.lang = S.lang;
+    el["s-title"].textContent = t.sTitle;
+    el["s-lang"].innerHTML = t.lang;
+    el["s-talk"].innerHTML = t.talkRow;
+    el["s-talkBell"].innerHTML = t.talkBellRow;
+    el["s-qa"].innerHTML = t.qaRow;
+    el["s-qaBell"].innerHTML = t.qaBellRow;
+    el["s-sound"].innerHTML = t.soundRow;
+    el["s-auto"].innerHTML = t.autoRow;
+    el["s-note"].textContent = t.note;
+    el.close.textContent = t.close;
+    el.test.textContent = t.test;
+    el.open.textContent = t.settings;
+    el.advance.textContent = t.toQa;
+    if (Date.now() > resetArmed) el.reset.textContent = t.reset;
+
     ["talk", "talkBell", "qa", "qaBell"].forEach(function (k) {
       document.getElementById("v-" + k).textContent = S[k];
     });
-    el.sound.setAttribute("aria-pressed", String(S.sound));
-    el.sound.textContent = S.sound ? "鳴らす" : "鳴らさない";
-    el.auto.setAttribute("aria-pressed", String(S.auto));
-    el.auto.textContent = S.auto ? "自動" : "手動";
+    el["t-sound"].setAttribute("aria-pressed", String(S.sound));
+    el["t-sound"].textContent = S.sound ? t.soundOn : t.soundOff;
+    el["t-auto"].setAttribute("aria-pressed", String(S.auto));
+    el["t-auto"].textContent = S.auto ? t.autoOn : t.autoOff;
+    el["lang-ja"].setAttribute("aria-pressed", String(S.lang === "ja"));
+    el["lang-en"].setAttribute("aria-pressed", String(S.lang === "en"));
+
+    document.querySelectorAll("[data-preset]").forEach(function (b) {
+      var p = b.dataset.preset.split(",").map(Number);
+      b.textContent = t.preset(p[0], p[2]);
+    });
   }
 
   document.querySelectorAll("[data-step]").forEach(function (b) {
     b.addEventListener("click", function () {
-      var parts = b.dataset.step.split(",");
-      var k = parts[0], d = Number(parts[1]);
-      var lim = limits[k];
+      var parts = b.dataset.step.split(","), k = parts[0], d = Number(parts[1]), lim = limits[k];
       S[k] = Math.max(lim[0], Math.min(lim[1], S[k] + d));
       save(); syncPanel(); paint();
     });
@@ -490,10 +466,13 @@
     });
   });
 
-  el.sound.addEventListener("click", function () { S.sound = !S.sound; save(); syncPanel(); if (S.sound) bell(1); });
-  el.auto.addEventListener("click", function () { S.auto = !S.auto; save(); syncPanel(); });
-  el.test.addEventListener("click", function () { audio(); bell(1); });
+  function setLang(v) { S.lang = v; save(); syncPanel(); paint(); }
+  el["lang-ja"].addEventListener("click", function () { setLang("ja"); });
+  el["lang-en"].addEventListener("click", function () { setLang("en"); });
 
+  el["t-sound"].addEventListener("click", function () { S.sound = !S.sound; save(); syncPanel(); if (S.sound) bell(1); });
+  el["t-auto"].addEventListener("click", function () { S.auto = !S.auto; save(); syncPanel(); });
+  el.test.addEventListener("click", function () { audio(); bell(1); });
   el.open.addEventListener("click", function () { el.sheet.setAttribute("open", ""); syncPanel(); });
   el.close.addEventListener("click", function () { el.sheet.removeAttribute("open"); });
 
