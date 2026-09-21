@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Session Timer">
+<title>Session Timer</title>
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+
+    --ink: #131a2b;
+    --ink-soft: #1c2437;
+    --ivory: #f4f1e8;
+    --dim: #8c93a6;
+    --line: rgba(244, 241, 232, .16);
+    --accent: #7fd6c2;
+
+    --bg: var(--ink);
+    --fg: var(--ivory);
+    --bar: var(--accent);
+    --label: var(--dim);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    overflow: hidden;
+    transition: background-color .45s ease, color .45s ease;
+  }
+  body[data-state="warn"] {
+    --bg: #3a2a0b;
+    --fg: #ffd98a;
+    --bar: #e8a33d;
+    --label: #c9a05a;
+  }
+  body[data-state="over"] {
+    --bg: #3d0f16;
+    --fg: #ff6f6f;
+    --bar: #ff5a5a;
+    --label: #d08d8d;
+  }
+
+  .screen {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    align-items: center;
+  }
+
+  .fuse {
+    height: 10px;
+    width: 100%;
+    background: rgba(244, 241, 232, .09);
+    flex: none;
+  }
+  .fuse span {
+    display: block;
+    height: 100%;
+    width: 100%;
+    background: var(--bar);
+    transform-origin: left center;
+    transition: background-color .45s ease;
+  }
+
+  .stage {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: .2em;
+    padding: 0 4vw;
+    min-height: 0;
+  }
+  .phase {
+    font-size: clamp(1.1rem, 4.2vmin, 2.6rem);
+    font-weight: 500;
+    letter-spacing: .04em;
+    color: var(--label);
+    transition: color .45s ease;
+  }
+  .clock {
+    font-size: min(28vh, 21vw);
+    font-weight: 600;
+    line-height: .9;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -.03em;
+    text-align: center;
+  }
+  body[data-state="over"] .clock { animation: breathe 1.6s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity: .45; } }
+  @media (prefers-reduced-motion: reduce) {
+    body[data-state="over"] .clock { animation: none; }
+  }
+  .next {
+    font-size: clamp(.95rem, 3vmin, 1.7rem);
+    color: var(--label);
+    transition: color .45s ease;
+  }
+
+  .desk {
+    display: flex;
+    gap: 10px;
+    padding: 12px max(14px, 2vw) 16px;
+    border-top: 1px solid var(--line);
+  }
+  button {
+    font: inherit;
+    font-size: clamp(1rem, 2.4vmin, 1.35rem);
+    font-weight: 500;
+    color: var(--fg);
+    background: rgba(244, 241, 232, .07);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 10px;
+    min-height: 62px;
+    flex: 1;
+    cursor: pointer;
+    transition: background-color .12s ease, opacity .2s ease;
+  }
+  button:active { background: rgba(244, 241, 232, .2); }
+  button:focus-visible { outline: 3px solid var(--bar); outline-offset: 2px; }
+  button[disabled] { opacity: .3; }
+  .primary {
+    flex: 2.2;
+    background: var(--bar);
+    color: #12182a;
+    border-color: transparent;
+    font-weight: 600;
+  }
+  .ghost { flex: .9; color: var(--label); }
+
+  .sheet {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 11, 20, .94);
+    display: none;
+    place-items: center;
+    padding: max(20px, env(safe-area-inset-top, 0px)) 20px 20px;
+    overflow-y: auto;
+  }
+  .sheet[open] { display: grid; }
+  .panel { width: min(680px, 100%); }
+  .panel h2 {
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin: 0 0 18px;
+    color: var(--ivory);
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(244, 241, 232, .1);
+  }
+  .row p { margin: 0; font-size: 1.15rem; color: var(--ivory); }
+  .row small { display: block; color: var(--dim); font-size: .95rem; }
+  .stepper { display: flex; align-items: center; gap: 6px; flex: none; }
+  .stepper button { min-height: 48px; width: 54px; flex: none; font-size: 1.4rem; padding: 0; }
+  .stepper output {
+    min-width: 76px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .toggle { min-height: 48px; width: 112px; flex: none; }
+  .toggle[aria-pressed="true"] { background: var(--accent); color: #12182a; border-color: transparent; }
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 0 4px; }
+  .presets button { flex: none; min-height: 52px; padding: 10px 18px; }
+  .done { width: 100%; margin-top: 18px; background: rgba(244, 241, 232, .12); }
+  .note { color: var(--dim); font-size: .9rem; margin: 14px 0 0; line-height: 1.6; }
+</style>
+</head>
+<body data-state="calm">
+<div class="screen">
+  <div class="fuse"><span id="fuse"></span></div>
+
+  <main class="stage">
+    <div class="phase" id="phase">Ready</div>
+    <div class="clock" id="clock">12:00</div>
+    <div class="next" id="next">Talk 12 min, then questions 3 min</div>
+  </main>
+
+  <div class="desk">
+    <button class="primary" id="go">開始</button>
+    <button id="advance" disabled>質疑へ</button>
+    <button class="ghost" id="reset">リセット</button>
+    <button class="ghost" id="open">設定</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="設定">
+  <div class="panel">
+    <h2>設定</h2>
+
+    <div class="row">
+      <p>発表<small>持ち時間</small></p>
+      <div class="stepper">
+        <button data-step="talk,-1" aria-label="発表を1分減らす">−</button>
+        <output id="v-talk">12</output>
+        <button data-step="talk,1" aria-label="発表を1分増やす">＋</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <p>発表の予鈴<small>残り何分で鳴らすか</small></p>
+      <div class="stepper">
+        <button data-step="talkBell,-1" aria-label="予鈴を1分早める">−</button>
+        <output id="v-talkBell">2</output>
+        <button data-step="talkBell,1" aria-label="予鈴を1分遅らせる">＋</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <p>質疑<small>持ち時間</small></p>
+      <div class="stepper">
+        <button data-step="qa,-1" aria-label="質疑を1分減らす">−</button>
+        <output id="v-qa">3</output>
+        <button data-step="qa,1" aria-label="質疑を1分増やす">＋</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <p>質疑の予鈴<small>残り何分で鳴らすか</small></p>
+      <div class="stepper">
+        <button data-step="qaBell,-1" aria-label="質疑の予鈴を1分早める">−</button>
+        <output id="v-qaBell">1</output>
+        <button data-step="qaBell,1" aria-label="質疑の予鈴を1分遅らせる">＋</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <p>ベル音<small>予鈴1回／発表終了2回／質疑終了3回</small></p>
+      <button class="toggle" id="t-sound" aria-pressed="true">鳴らす</button>
+    </div>
+
+    <div class="row">
+      <p>質疑へ自動で移る<small>切ると「質疑へ」を押すまで超過時間を表示</small></p>
+      <button class="toggle" id="t-auto" aria-pressed="false">手動</button>
+    </div>
+
+    <div class="presets">
+      <button data-preset="12,2,3,1">12＋3分</button>
+      <button data-preset="15,3,5,1">15＋5分</button>
+      <button data-preset="20,5,5,1">20＋5分</button>
+      <button data-preset="8,1,2,1">8＋2分</button>
+      <button id="test">ベルを試す</button>
+    </div>
+
+    <button class="done" id="close">閉じる</button>
+    <p class="note">設定はこのiPadに保存されます。本番前に一度「ベルを試す」を押しておくと、iOSの制限で音が出ない事故を防げます。</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var DEFAULTS = { talk: 12, talkBell: 2, qa: 3, qaBell: 0, sound: true, auto: true };
+  var S = Object.assign({}, DEFAULTS);
+
+  try {
+    var saved = localStorage.getItem("session-timer-v2");
+    if (saved) S = Object.assign(S, JSON.parse(saved));
+  } catch (e) { /* 保存が使えなくても既定値で動く */ }
+
+  function save() {
+    try { localStorage.setItem("session-timer-v2", JSON.stringify(S)); } catch (e) {}
+  }
+
+  var el = {
+    body: document.body,
+    clock: document.getElementById("clock"),
+    phase: document.getElementById("phase"),
+    next: document.getElementById("next"),
+    fuse: document.getElementById("fuse"),
+    go: document.getElementById("go"),
+    advance: document.getElementById("advance"),
+    reset: document.getElementById("reset"),
+    open: document.getElementById("open"),
+    close: document.getElementById("close"),
+    sheet: document.getElementById("sheet"),
+    sound: document.getElementById("t-sound"),
+    auto: document.getElementById("t-auto"),
+    test: document.getElementById("test")
+  };
+
+  var phase = "idle";      // idle | talk | qa
+  var running = false;
+  var deadline = 0;        // epoch ms
+  var left = 0;            // ms remaining while paused
+  var total = 0;           // ms of current phase
+  var rangWarn = false, rangEnd = false;
+  var resetArmed = 0;
+
+  /* ---------- ベル ---------- */
+  var ac = null;
+  function audio() {
+    if (!ac) {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      ac = new Ctx();
+    }
+    if (ac.state === "suspended") ac.resume();
+    return ac;
+  }
+  function strike(at) {
+    var c = audio();
+    if (!c) return;
+    var t = c.currentTime + at;
+    [[784, 0.5, "sine"], [1568, 0.22, "sine"], [2350, 0.1, "triangle"]].forEach(function (p) {
+      var o = c.createOscillator(), g = c.createGain();
+      o.type = p[2];
+      o.frequency.setValueAtTime(p[0], t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(p[1], t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.9);
+      o.connect(g); g.connect(c.destination);
+      o.start(t); o.stop(t + 2);
+    });
+  }
+  function bell(times) {
+    if (!S.sound) return;
+    for (var i = 0; i < times; i++) strike(i * 0.62);
+  }
+
+  /* ---------- 画面を消さない ---------- */
+  var lock = null;
+  function keepAwake() {
+    if (!navigator.wakeLock || lock) return;
+    navigator.wakeLock.request("screen").then(function (l) {
+      lock = l;
+      l.addEventListener("release", function () { lock = null; });
+    }).catch(function () {});
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && running) keepAwake();
+  });
+
+  /* ---------- 表示 ---------- */
+  function fmt(ms) {
+    var over = ms < 0;
+    var s = Math.floor((Math.abs(ms) + 999) / 1000);
+    if (over) s = Math.floor(Math.abs(ms) / 1000);
+    var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+    var body = (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(sec).padStart(2, "0");
+    return (over ? "+" : "") + body;
+  }
+
+  function label() {
+    if (phase === "talk") return "Talk";
+    if (phase === "qa") return "Questions";
+    return "Ready";
+  }
+
+  function paint() {
+    var ms = running ? deadline - Date.now() : left;
+
+    if (phase === "idle") {
+      el.clock.textContent = fmt(S.talk * 60000);
+      el.phase.textContent = "Ready";
+      el.next.textContent = "Talk " + S.talk + " min, then questions " + S.qa + " min";
+      el.fuse.style.width = "100%";
+      el.body.dataset.state = "calm";
+      return;
+    }
+
+    el.clock.textContent = fmt(ms);
+    el.phase.textContent = running ? label() : label() + " — paused";
+
+    var warnMs = (phase === "talk" ? S.talkBell : S.qaBell) * 60000;
+    var state = ms <= 0 ? "over" : (ms <= warnMs ? "warn" : "calm");
+    el.body.dataset.state = state;
+
+    if (phase === "talk") {
+      el.next.textContent = ms <= 0 ? "Time is up — questions " + S.qa + " min next"
+                                    : "Questions " + S.qa + " min to follow";
+    } else {
+      el.next.textContent = ms <= 0 ? "Please close the session" : "Last part of the session";
+    }
+
+    var pct = Math.max(0, Math.min(1, ms / total));
+    el.fuse.style.width = (ms <= 0 ? 100 : pct * 100) + "%";
+
+    el.go.textContent = running ? "一時停止" : "再開";
+    el.advance.disabled = (phase !== "talk");
+  }
+
+  function tick() {
+    if (!running) return;
+    var ms = deadline - Date.now();
+    var warnMs = (phase === "talk" ? S.talkBell : S.qaBell) * 60000;
+
+    if (!rangWarn && ms <= warnMs && ms > 0) { rangWarn = true; bell(1); }
+    if (!rangEnd && ms <= 0) {
+      rangEnd = true;
+      bell(phase === "talk" ? 2 : 3);
+      if (phase === "talk" && S.auto) { start("qa"); return; }
+    }
+    paint();
+  }
+  setInterval(tick, 200);
+
+  function start(p) {
+    phase = p;
+    total = (p === "talk" ? S.talk : S.qa) * 60000;
+    deadline = Date.now() + total;
+    left = total;
+    rangWarn = false; rangEnd = false;
+    running = true;
+    audio();
+    keepAwake();
+    paint();
+  }
+
+  el.go.addEventListener("click", function () {
+    if (phase === "idle") { start("talk"); return; }
+    if (running) {
+      left = deadline - Date.now();
+      running = false;
+    } else {
+      deadline = Date.now() + left;
+      running = true;
+      keepAwake();
+    }
+    paint();
+  });
+
+  el.advance.addEventListener("click", function () { start("qa"); });
+
+  el.reset.addEventListener("click", function () {
+    if (Date.now() > resetArmed) {
+      resetArmed = Date.now() + 4000;
+      el.reset.textContent = "もう一度でリセット";
+      setTimeout(function () { el.reset.textContent = "リセット"; }, 4000);
+      return;
+    }
+    resetArmed = 0;
+    el.reset.textContent = "リセット";
+    phase = "idle"; running = false; left = 0;
+    el.go.textContent = "開始";
+    paint();
+  });
+
+  /* ---------- 設定 ---------- */
+  var limits = { talk: [1, 90], talkBell: [0, 30], qa: [0, 60], qaBell: [0, 30] };
+
+  function syncPanel() {
+    ["talk", "talkBell", "qa", "qaBell"].forEach(function (k) {
+      document.getElementById("v-" + k).textContent = S[k];
+    });
+    el.sound.setAttribute("aria-pressed", String(S.sound));
+    el.sound.textContent = S.sound ? "鳴らす" : "鳴らさない";
+    el.auto.setAttribute("aria-pressed", String(S.auto));
+    el.auto.textContent = S.auto ? "自動" : "手動";
+  }
+
+  document.querySelectorAll("[data-step]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var parts = b.dataset.step.split(",");
+      var k = parts[0], d = Number(parts[1]);
+      var lim = limits[k];
+      S[k] = Math.max(lim[0], Math.min(lim[1], S[k] + d));
+      save(); syncPanel(); paint();
+    });
+  });
+
+  document.querySelectorAll("[data-preset]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var p = b.dataset.preset.split(",").map(Number);
+      S.talk = p[0]; S.talkBell = p[1]; S.qa = p[2]; S.qaBell = p[3];
+      save(); syncPanel(); paint();
+    });
+  });
+
+  el.sound.addEventListener("click", function () { S.sound = !S.sound; save(); syncPanel(); if (S.sound) bell(1); });
+  el.auto.addEventListener("click", function () { S.auto = !S.auto; save(); syncPanel(); });
+  el.test.addEventListener("click", function () { audio(); bell(1); });
+
+  el.open.addEventListener("click", function () { el.sheet.setAttribute("open", ""); syncPanel(); });
+  el.close.addEventListener("click", function () { el.sheet.removeAttribute("open"); });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.code === "Space") { e.preventDefault(); el.go.click(); }
+    if (e.key === "n" || e.key === "N") { if (!el.advance.disabled) el.advance.click(); }
+    if (e.key === "Escape") el.sheet.removeAttribute("open");
+  });
+
+  syncPanel();
+  paint();
+})();
+</script>
+</body>
+</html>
