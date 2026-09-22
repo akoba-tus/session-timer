@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<!-- saved from url=(0070)file:///C:/Users/Atsushi%20Kobayashi/Downloads/conference-timer_1.html -->
-<html lang="ja" style="--clock-scale: 1;"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="ja">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -152,29 +152,29 @@
 </head>
 <body data-state="calm">
 <div class="screen">
-  <div class="fuse"><span id="fuse" style="width: 100%;"></span></div>
+  <div class="fuse"><span id="fuse"></span></div>
 
   <main class="stage">
-    <div class="phase" id="phase">準備</div>
-    <div class="clock" id="clock">1:00</div>
-    <div class="next" id="next">発表 1 分 ／ 質疑 1 分</div>
+    <div class="phase" id="phase">Ready</div>
+    <div class="clock" id="clock">12:00</div>
+    <div class="next" id="next"></div>
   </main>
 
   <div class="desk">
-    <button class="primary" id="go">開始</button>
-    <button id="advance" disabled="" hidden="">質疑へ</button>
-    <button class="ghost" id="reset">リセット</button>
-    <button class="ghost" id="open">設定</button>
+    <button class="primary" id="go">Start</button>
+    <button id="advance" disabled>Q&amp;A</button>
+    <button class="ghost" id="reset">Reset</button>
+    <button class="ghost" id="open">Settings</button>
     <button class="ghost icon" id="help" aria-label="Help">?</button>
   </div>
 </div>
 
 <div class="sheet" id="sheet" role="dialog" aria-modal="true">
   <div class="panel">
-    <h2 id="s-title">設定</h2>
+    <h2 id="s-title">Settings</h2>
 
     <div class="row">
-      <p id="s-lang">言語<small>Language</small></p>
+      <p id="s-lang"></p>
       <div class="pair">
         <button id="lang-ja" aria-pressed="true">日本語</button>
         <button id="lang-en" aria-pressed="false">English</button>
@@ -182,34 +182,34 @@
     </div>
 
     <div class="row">
-      <p id="s-talk">発表<small>持ち時間（分）</small></p>
+      <p id="s-talk"></p>
       <div class="stepper">
         <button data-step="talk,-1">−</button>
-        <output id="v-talk">1</output>
+        <output id="v-talk">12</output>
         <button data-step="talk,1">＋</button>
       </div>
     </div>
 
     <div class="row">
-      <p id="s-talkBell">発表の予鈴<small>残り何分で鳴らすか（0で無し）</small></p>
+      <p id="s-talkBell"></p>
       <div class="stepper">
         <button data-step="talkBell,-1">−</button>
-        <output id="v-talkBell">0</output>
+        <output id="v-talkBell">2</output>
         <button data-step="talkBell,1">＋</button>
       </div>
     </div>
 
     <div class="row">
-      <p id="s-qa">質疑<small>持ち時間（分）</small></p>
+      <p id="s-qa"></p>
       <div class="stepper">
         <button data-step="qa,-1">−</button>
-        <output id="v-qa">1</output>
+        <output id="v-qa">3</output>
         <button data-step="qa,1">＋</button>
       </div>
     </div>
 
     <div class="row">
-      <p id="s-qaBell">質疑の予鈴<small>残り何分で鳴らすか（0で無し）</small></p>
+      <p id="s-qaBell"></p>
       <div class="stepper">
         <button data-step="qaBell,-1">−</button>
         <output id="v-qaBell">0</output>
@@ -218,7 +218,7 @@
     </div>
 
     <div class="row">
-      <p id="s-size">文字の大きさ<small>離れた席から見えるように</small></p>
+      <p id="s-size"></p>
       <div class="stepper">
         <button data-step="size,-10">−</button>
         <output id="v-size">100%</output>
@@ -227,36 +227,36 @@
     </div>
 
     <div class="row">
-      <p id="s-sound">ベル音<small>予鈴1回／発表終了2回／質疑終了3回</small></p>
+      <p id="s-sound"></p>
       <div class="pair">
-        <button id="test">試聴</button>
-        <button class="toggle" id="t-sound" aria-pressed="true">鳴らす</button>
+        <button id="test"></button>
+        <button class="toggle" id="t-sound" aria-pressed="true"></button>
       </div>
     </div>
 
     <div class="row">
-      <p id="s-auto">質疑へ自動で移る<small>切ると「質疑へ」を押すまで超過時間を表示</small></p>
-      <button class="toggle" id="t-auto" aria-pressed="true">自動</button>
+      <p id="s-auto"></p>
+      <button class="toggle" id="t-auto" aria-pressed="true"></button>
     </div>
 
     <div class="presets" id="presets">
-      <button data-preset="12,2,3,0">12＋3分</button>
-      <button data-preset="15,3,5,1">15＋5分</button>
-      <button data-preset="20,5,5,1">20＋5分</button>
-      <button data-preset="8,1,2,0">8＋2分</button>
+      <button data-preset="12,2,3,0"></button>
+      <button data-preset="15,3,5,1"></button>
+      <button data-preset="20,5,5,1"></button>
+      <button data-preset="8,1,2,0"></button>
     </div>
 
-    <button class="done" id="close">閉じる</button>
-    <p class="note" id="s-note">設定はこの端末に保存されます。本番前に一度「試聴」を押して、音量とマナーモードを確認してください。</p>
+    <button class="done" id="close"></button>
+    <p class="note" id="s-note"></p>
   </div>
 </div>
 
 <div class="sheet" id="help-sheet" role="dialog" aria-modal="true">
   <div class="panel">
-    <h2 id="h-title">使い方</h2>
-    <div class="manual" id="h-body"><h3>進行</h3><ul><li><b>開始</b>を押すと発表のカウントダウンが始まります</li><li>終了が近づくと予鈴が1回鳴り、画面が琥珀色になります</li><li>発表終了でベル2回。そのまま質疑のタイマーに切り替わります</li><li>質疑終了でベル3回。以降は赤字で超過時間をカウントアップします</li><li>早く終わったときは<b>質疑へ</b>で先に進めます</li><li>発表が超過した分は質疑から差し引かれ、セッション全体の持ち時間は変わりません</li></ul><h3>画面の色</h3><ul><li><span class="swatch" style="background:#7fd6c2"></span>紺 … 通常</li><li><span class="swatch" style="background:#e8a33d"></span>琥珀 … まもなく終了</li><li><span class="swatch" style="background:#ff5a5a"></span>赤 … 時間切れ・超過中</li><li>発表者は数字を読まなくても、色の変化で気づけます</li></ul><h3>本番前の確認</h3><ul><li>下の<b>ベルを鳴らして音量を確認</b>を一度押してください（iOSは一度タップするまで音が出ません）</li><li>マナーモードがオンだと鳴りません</li><li>自動ロックを「なし」にしてください</li><li>時間の変更は<b>設定</b>から。この端末に保存されます</li></ul><h3>その他</h3><ul><li><b>リセット</b>は誤操作防止のため2回タップです</li><li>外付けキーボードならスペースキーで開始・一時停止できます</li></ul><h3>作者</h3><p class="credit">IWN2026<br>Atsushi Kobayashi</p><p class="credit" style="margin-top:8px">v1.5</p></div>
-    <button class="done" id="h-test">ベルを鳴らして音量を確認</button>
-    <button class="done" id="h-close">閉じる</button>
+    <h2 id="h-title"></h2>
+    <div class="manual" id="h-body"></div>
+    <button class="done" id="h-test"></button>
+    <button class="done" id="h-close"></button>
   </div>
 </div>
 
@@ -296,8 +296,8 @@
         "<li>終了が近づくと予鈴が1回鳴り、画面が琥珀色になります</li>",
         "<li>発表終了でベル2回。そのまま質疑のタイマーに切り替わります</li>",
         "<li>質疑終了でベル3回。以降は赤字で超過時間をカウントアップします</li>",
-        "<li>早く終わったときは<b>質疑へ</b>で先に進めます</li>",
-        "<li>発表が超過した分は質疑から差し引かれ、セッション全体の持ち時間は変わりません</li>",
+        "<li>早く終わったときは<b>質疑へ</b>。残った時間は質疑に繰り越されます</li>",
+        "<li>逆に超過した分は質疑から差し引かれます。どちらの場合もセッション全体の持ち時間は変わりません</li>",
         "</ul>",
         "<h3>画面の色</h3><ul>",
         "<li><span class='swatch' style='background:#7fd6c2'></span>紺 … 通常</li>",
@@ -350,8 +350,8 @@
         "<li>One bell and an amber screen warn that the end is near</li>",
         "<li>Two bells at the end of the talk; the discussion timer starts automatically</li>",
         "<li>Three bells at the end of the discussion, then overtime counts up in red</li>",
-        "<li><b>Q&amp;A</b> moves on early if the speaker finishes ahead of time</li>",
-        "<li>Any overtime is taken out of the discussion, so the length of the slot stays the same</li>",
+        "<li><b>Q&amp;A</b> moves on early; the unused talk time is carried over to the discussion</li>",
+        "<li>Overtime is taken out of the discussion instead. Either way the slot keeps its total length</li>",
         "</ul>",
         "<h3>Screen colours</h3><ul>",
         "<li><span class='swatch' style='background:#7fd6c2'></span>Navy — running normally</li>",
@@ -489,10 +489,11 @@
   setInterval(tick, 200);
 
   function start(p, deduct) {
-    deduct = Math.max(0, deduct || 0);
+    deduct = deduct || 0;
     phase = p;
-    total = (p === "talk" ? S.talk : S.qa) * 60000;
-    var rem = total - deduct;
+    var dur = (p === "talk" ? S.talk : S.qa) * 60000;
+    var rem = dur - deduct;
+    total = Math.max(dur, rem);
     var warnMs = (p === "talk" ? S.talkBell : S.qaBell) * 60000;
     deadline = Date.now() + rem;
     left = rem;
@@ -511,7 +512,11 @@
     paint();
   });
 
-  el.advance.addEventListener("click", function () { if (phase === "talk") start("qa"); });
+  el.advance.addEventListener("click", function () {
+    if (phase !== "talk") return;
+    var ms = running ? deadline - Date.now() : left;
+    start("qa", -Math.max(0, ms));
+  });
 
   el.reset.addEventListener("click", function () {
     if (Date.now() > resetArmed) {
@@ -545,7 +550,7 @@
     el.close.textContent = t.close;
     el.test.textContent = t.test;
     el["h-title"].textContent = t.hTitle;
-    el["h-body"].innerHTML = t.hBody + "<p class='credit' style='margin-top:8px'>v1.5</p>";
+    el["h-body"].innerHTML = t.hBody + "<p class='credit' style='margin-top:8px'>v1.6</p>";
     el["h-test"].textContent = t.hTest;
     el["h-close"].textContent = t.hClose;
     el.open.textContent = t.settings;
@@ -609,6 +614,5 @@
   paint();
 })();
 </script>
-
-
-</body></html>
+</body>
+</html>
