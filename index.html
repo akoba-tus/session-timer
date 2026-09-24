@@ -132,6 +132,15 @@
   .manual li { margin: 6px 0; }
   .manual b { font-weight: 600; }
   .manual .credit { margin: 0; color: var(--dim); line-height: 1.5; }
+  .toast {
+    position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 22px);
+    transform: translateX(-50%);
+    max-width: 90%; padding: 10px 18px; border-radius: 10px;
+    background: rgba(8, 11, 20, .92); color: var(--ivory);
+    font-size: clamp(.95rem, 2.2vmin, 1.2rem); text-align: center;
+    opacity: 0; pointer-events: none; transition: opacity .3s ease;
+  }
+  .toast[data-show] { opacity: 1; }
   .swatch { display: inline-block; width: .72em; height: .72em; border-radius: 3px; margin-right: .35em; }
 </style>
 </head>
@@ -160,6 +169,8 @@
     <button class="ghost icon" id="help" aria-label="Help">?</button>
   </div>
 </div>
+
+<div class="toast" id="toast" role="status"></div>
 
 <div class="sheet" id="sheet" role="dialog" aria-modal="true">
   <div class="panel">
@@ -225,7 +236,7 @@
 <script>
 (function () {
   "use strict";
-  var VERSION = "2.0";
+  var VERSION = "2.1";
 
   var T = {
     ja: {
@@ -237,6 +248,7 @@
       start: "開始", pause: "一時停止", resume: "再開", toQa: "質疑へ", startQa: "質疑を開始",
       reset: "リセット", resetConfirm: "もう一度でリセット", settings: "設定", close: "閉じる",
       progNone: "プログラム未取得", progEnd: "プログラム終了",
+      restored: "前回の状態から再開しました（ベルを鳴らすには画面のどこかを一度タップ）",
       sTitle: "設定",
       lang: "言語<small>Language</small>",
       talkRow: "発表<small>持ち時間（分）</small>",
@@ -274,6 +286,7 @@
         "<h3>その他</h3><ul>",
         "<li><b>リセット</b>は誤操作防止のため2回タップです</li>",
         "<li>外付けキーボードならスペースキーで開始・一時停止できます</li>",
+        "<li>誤って閉じたりリロードしたりしても、開き直せば続きから再開します</li>",
         "</ul>"
       ].join(""),
       hNet: function (room) {
@@ -294,6 +307,7 @@
       start: "Start", pause: "Pause", resume: "Resume", toQa: "Q&A", startQa: "Start questions",
       reset: "Reset", resetConfirm: "Tap again to reset", settings: "Settings", close: "Close",
       progNone: "Programme not loaded", progEnd: "End of programme",
+      restored: "Resumed where you left off (tap anywhere once to re-enable the bell)",
       sTitle: "Settings",
       lang: "Language<small>言語</small>",
       talkRow: "Talk<small>length in minutes</small>",
@@ -331,6 +345,7 @@
         "<h3>Also</h3><ul>",
         "<li><b>Reset</b> needs two taps, so a running timer is not lost by accident</li>",
         "<li>With a keyboard attached, the space bar starts and pauses</li>",
+        "<li>If the page is closed or reloaded by mistake, reopening it carries on where it left off</li>",
         "</ul>"
       ].join(""),
       hNet: function (room) {
@@ -388,7 +403,7 @@
    "s-title", "s-lang", "s-talk", "s-talkBell", "s-qa", "s-qaBell", "s-size", "s-sound", "s-auto", "s-note",
    "t-sound", "t-auto", "lang-ja", "lang-en",
    "help", "help-sheet", "h-title", "h-body", "h-test", "h-close",
-   "strip", "who", "dot", "prevTalk", "nextTalk"].forEach(function (id) { el[id] = document.getElementById(id); });
+   "strip", "who", "dot", "prevTalk", "nextTalk", "toast"].forEach(function (id) { el[id] = document.getElementById(id); });
 
   var phase = "idle", running = false, deadline = 0, left = 0, total = 0;
   var rangWarn = false, rangEnd = false, resetArmed = 0;
@@ -402,6 +417,51 @@
     }
     return d;
   }
+
+  /* ---- running state survives a reload ---- */
+  var STATE = "session-timer-state" + (HUB ? ":" + HUB.id : "");
+  var MAX_AGE = 3 * 3600000;
+  function saveState() {
+    try {
+      localStorage.setItem(STATE, JSON.stringify({
+        phase: phase, running: running, deadline: deadline, left: left, total: total,
+        rangWarn: rangWarn, rangEnd: rangEnd, current: current, startedAt: startedAt,
+        idx: idx, at: Date.now()
+      }));
+    } catch (e) {}
+  }
+  function applyState(st) {
+    if (!st || !st.phase || Date.now() - (st.at || 0) > MAX_AGE) return false;
+    if (typeof st.idx === "number" && st.idx >= 0) idx = st.idx;
+    if (st.phase === "idle") return false;
+    if (st.running && typeof st.deadline !== "number") return false;
+    phase = st.phase; running = !!st.running;
+    deadline = st.deadline || 0; left = st.left || 0; total = st.total || 1;
+    rangWarn = !!st.rangWarn; rangEnd = !!st.rangEnd;
+    current = st.current || null; startedAt = st.startedAt || null;
+    return true;
+  }
+  function fromSnapshot(r) {
+    if (!r || !r.phase) return null;
+    var ms = r.running ? r.deadline - Date.now() : (r.left || 0);
+    var warn = (r.phase === "talk" ? S.talkBell : S.qaBell) * 60000;
+    return {
+      phase: r.phase, running: !!r.running, deadline: r.deadline, left: r.left, total: r.total,
+      rangWarn: !(warn > 0 && ms > warn), rangEnd: ms <= 0,
+      current: r.phase === "idle" ? null : { time: r.time, speaker: r.speaker, title: r.title, talk: r.talkMin, qa: r.qaMin },
+      startedAt: r.startedAt, idx: r.idx, at: r.sent
+    };
+  }
+  var toastTimer = null, toasted = false;
+  function toast(text) {
+    if (toasted) return;
+    toasted = true;
+    el.toast.textContent = text;
+    el.toast.setAttribute("data-show", "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.toast.removeAttribute("data-show"); }, 6000);
+  }
+  function commit() { saveState(); push(); }
 
   /* ---- bell ---- */
   var ac = null;
@@ -430,6 +490,9 @@
     });
   }
   function bell(n) { if (S.sound) for (var i = 0; i < n; i++) strike(i * 0.62); }
+  function unlock() { audio(); if (running) keepAwake(); }
+  document.addEventListener("click", unlock, true);
+  document.addEventListener("touchend", unlock, true);
 
   /* ---- keep the screen on ---- */
   var lock = null;
@@ -555,10 +618,11 @@
     if (!running) return;
     var ms = deadline - Date.now();
     var warnMs = (phase === "talk" ? S.talkBell : S.qaBell) * 60000;
-    if (!rangWarn && warnMs > 0 && ms <= warnMs && ms > 0) { rangWarn = true; bell(1); }
+    if (!rangWarn && warnMs > 0 && ms <= warnMs && ms > 0) { rangWarn = true; bell(1); saveState(); }
     if (!rangEnd && ms <= 0) {
       rangEnd = true;
       bell(phase === "talk" ? 2 : 3);
+      saveState();
       if (phase === "talk" && S.auto) { start("qa", -ms); return; }
     }
     paint();
@@ -579,7 +643,7 @@
     rangWarn = !(warnMs > 0 && rem > warnMs);
     rangEnd = (rem <= 0);
     running = true;
-    audio(); keepAwake(); paint(); push();
+    audio(); keepAwake(); paint(); commit();
   }
 
   el.go.addEventListener("click", function () {
@@ -588,7 +652,7 @@
     if (phase === "talk" && running && ms <= 0 && !S.auto) { start("qa", -ms); return; }
     if (running) { left = ms; running = false; }
     else { deadline = Date.now() + left; running = true; keepAwake(); }
-    paint(); push();
+    paint(); commit();
   });
 
   el.advance.addEventListener("click", function () {
@@ -608,16 +672,16 @@
     el.reset.textContent = L().reset;
     if (phase !== "idle" && current && idx < program.length) idx++;
     phase = "idle"; running = false; left = 0; current = null; startedAt = null;
-    saveProg(); paint(); push(); fetchProgram();
+    saveProg(); paint(); commit(); fetchProgram();
   });
 
   el.prevTalk.addEventListener("click", function () {
     if (phase !== "idle" || idx <= 0) return;
-    idx--; saveProg(); paint(); push();
+    idx--; saveProg(); paint(); commit();
   });
   el.nextTalk.addEventListener("click", function () {
     if (phase !== "idle" || idx >= program.length) return;
-    idx++; saveProg(); paint(); push();
+    idx++; saveProg(); paint(); commit();
   });
 
   /* ---- settings panel ---- */
@@ -665,7 +729,7 @@
     });
   }
 
-  function changed() { save(); syncPanel(); paint(); push(); }
+  function changed() { save(); syncPanel(); paint(); commit(); }
 
   document.querySelectorAll("[data-step]").forEach(function (b) {
     b.addEventListener("click", function () {
@@ -699,9 +763,30 @@
     if (e.key === "Escape") { el.sheet.removeAttribute("open"); el["help-sheet"].removeAttribute("open"); }
   });
 
+  var local = null;
+  try { local = JSON.parse(localStorage.getItem(STATE) || "null"); } catch (e) {}
+  var resumed = applyState(local);
   syncPanel();
   paint();
-  if (HUB) { push(); fetchProgram(); }
+  if (resumed) { toast(L().restored); if (running) keepAwake(); }
+
+  if (HUB) {
+    // another iPad may have been running this room: take its state if it is newer
+    try {
+      fetch(hubUrl("/rooms/" + encodeURIComponent(HUB.id)), { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (snap) {
+          setNet(true);
+          var st = fromSnapshot(snap);
+          if (st && (!local || (st.at || 0) > (local.at || 0) + 1500)) {
+            if (applyState(st)) toast(L().restored);
+            saveProg(); saveState(); paint();
+          }
+        })
+        .catch(function () { setNet(false); })
+        .then(function () { push(); fetchProgram(); });
+    } catch (e) { push(); fetchProgram(); }
+  }
 })();
 </script>
 </body>
