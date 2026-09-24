@@ -69,6 +69,14 @@ Everything lives in `index.html` — layout, bell sounds, wording. The bell is s
 
 Pull requests and forks are welcome.
 
+## Room monitor (optional)
+
+For conferences with several parallel rooms, `monitor.html` shows every room's timer on one screen for the conference office: phase, time left or over, speaker, title, and how far the room is running behind schedule.
+
+It uses a free Firebase Realtime Database. Paste the database URL and the programme (copied straight from Excel) into the monitor page, then scan each room's QR code with that room's iPad. Timers opened without a room in the URL behave exactly as before and never touch the network.
+
+The timer keeps running if the connection drops; the monitor marks that room as offline until it hears from it again.
+
 ## Credits
 
 Made for IWN2026 by Atsushi Kobayashi.
@@ -144,6 +152,14 @@ MIT
 ## 改造
 
 すべて `index.html` の中にあります。ベルはWeb Audio APIで合成しているので音声ファイルはありません。鳴らし方は `bell()` 関数、文言はスクリプト冒頭の `T` を見てください。バージョン番号は「?」の一番下に出ます。古いファイルを見ていないかの確認に使えます。
+
+## 会場モニタ（任意）
+
+複数会場で並行して使う場合、`monitor.html` で全会場のタイマーを事務局の1画面にまとめて表示できます。発表中か質疑中か、残り時間・超過時間、発表者、演題、予定からの遅れが見えます。
+
+無料のFirebase Realtime Databaseを使います。モニター画面にデータベースのURLとプログラム（Excelからそのまま貼り付け）を入れ、各会場のiPadで表示されたQRコードを読み取るだけです。URLに会場を付けずに開いたタイマーは今まで通り単体で動き、通信は一切しません。
+
+通信が切れてもタイマーは動き続けます。モニター側ではその会場が「通信なし」と表示されます。
 
 ## 作者
 
