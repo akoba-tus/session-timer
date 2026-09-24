@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Session Monitor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --ink: #131a2b;
+    --card: #1b2338;
+    --ivory: #f4f1e8;
+    --dim: #8c93a6;
+    --line: rgba(244, 241, 232, .14);
+    --accent: #7fd6c2;
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html, body { margin: 0; }
+  body {
+    background: var(--ink);
+    color: var(--ivory);
+    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", "Hiragino Sans", "Yu Gothic", Arial, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 18px;
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 { font-size: 1.25rem; font-weight: 500; margin: 0; }
+  #status { color: var(--dim); font-size: .95rem; }
+  #status[data-bad] { color: #ff8a8a; }
+  #now { margin-left: auto; font-size: 1.7rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 14px;
+    padding: 20px 24px;
+  }
+  .card {
+    --fg: var(--ivory); --label: var(--dim); --bar: var(--accent);
+    background: var(--card);
+    color: var(--fg);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px 14px;
+    display: grid; gap: 6px;
+    transition: background-color .4s ease, opacity .4s ease;
+  }
+  .card[data-state="warn"] { background: #3a2a0b; --fg: #ffd98a; --label: #c9a05a; --bar: #e8a33d; }
+  .card[data-state="over"] { background: #3d0f16; --fg: #ff7373; --label: #d08d8d; --bar: #ff5a5a; }
+  .card[data-state="idle"] { --fg: var(--dim); }
+  .card[data-stale] { opacity: .45; }
+  .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .room { font-size: 1.15rem; font-weight: 600; color: var(--ivory); }
+  .chip { font-size: .9rem; color: var(--label); }
+  .time { font-size: 3.4rem; font-weight: 600; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .bar { height: 6px; border-radius: 3px; background: rgba(244, 241, 232, .1); overflow: hidden; }
+  .bar span { display: block; height: 100%; background: var(--bar); }
+  .who { font-size: 1.05rem; color: var(--ivory); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .title {
+    font-size: .92rem; color: var(--label); line-height: 1.4; min-height: 2.8em;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .foot { display: flex; justify-content: space-between; gap: 8px; font-size: .84rem; color: var(--label); font-variant-numeric: tabular-nums; }
+  .late { color: #ffb36b; }
+
+  .setup { margin: 8px 24px 40px; border: 1px solid var(--line); border-radius: 14px; }
+  .setup summary { padding: 14px 18px; cursor: pointer; font-size: 1.05rem; color: var(--dim); }
+  .setup[open] summary { border-bottom: 1px solid var(--line); }
+  .sec { padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  .sec:last-child { border-bottom: 0; }
+  .sec h2 { font-size: 1rem; font-weight: 600; margin: 0 0 6px; }
+  .sec p { margin: 0 0 10px; color: var(--dim); font-size: .92rem; line-height: 1.6; }
+  input[type="text"], textarea {
+    width: 100%; font: inherit; font-size: .95rem;
+    color: var(--ivory); background: rgba(244, 241, 232, .06);
+    border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  }
+  textarea { min-height: 160px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .85rem; }
+  .line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  button {
+    font: inherit; font-size: .95rem; color: var(--ivory);
+    background: rgba(244, 241, 232, .09); border: 1px solid var(--line);
+    border-radius: 8px; padding: 9px 14px; cursor: pointer;
+  }
+  button.main { background: var(--accent); color: #12182a; border-color: transparent; font-weight: 600; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .85rem; background: rgba(244, 241, 232, .08); padding: 1px 5px; border-radius: 4px; }
+  pre.rules { overflow-x: auto; background: rgba(244, 241, 232, .06); border-radius: 8px; padding: 12px; font-size: .82rem; margin: 0; }
+  #msg { color: var(--accent); font-size: .92rem; }
+  #msg[data-bad] { color: #ff8a8a; }
+  .links { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-top: 10px; }
+  .link { background: rgba(244, 241, 232, .05); border-radius: 10px; padding: 12px; display: grid; gap: 8px; justify-items: start; }
+  .link b { font-size: 1rem; }
+  .qr { background: #fff; padding: 8px; border-radius: 6px; line-height: 0; }
+  .qr img, .qr canvas { display: block; }
+  .preview { overflow-x: auto; margin-top: 10px; }
+  .preview table { border-collapse: collapse; font-size: .88rem; min-width: 100%; }
+  .preview th, .preview td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .preview th { color: var(--dim); font-weight: 500; }
+
+  /* ---- overlay mode (?overlay=Room) for OBS browser sources ---- */
+  #ov { display: none; }
+  html.ov, html.ov body { background: transparent !important; }
+  html.ov header, html.ov .grid, html.ov .setup { display: none !important; }
+  html.ov #ov {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "l time" "who who" "bar bar";
+    align-items: center; column-gap: 18px; row-gap: 5px;
+    width: 440px; margin: 10px; padding: 12px 18px;
+    border-radius: 14px;
+    background: rgba(19, 26, 43, .88); color: #f4f1e8;
+    --label: #aab1c2; --bar: #7fd6c2;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .35);
+    transition: background-color .4s ease;
+  }
+  #ov[data-state="warn"] { background: rgba(232, 163, 61, .96); color: #1a1204; --label: #4a3208; --bar: #1a1204; }
+  #ov[data-state="over"] { background: rgba(205, 45, 56, .96); color: #fff; --label: #ffe1e1; --bar: #fff; }
+  #ov[data-stale] { background: rgba(58, 62, 74, .88); color: #c9ccd4; --bar: #8c93a6; }
+  .ov-l { grid-area: l; }
+  .ov-room { font-size: 1.05rem; font-weight: 700; }
+  .ov-chip { font-size: .9rem; color: var(--label); }
+  .ov-time { grid-area: time; justify-self: end; font-size: 3.2rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .ov-who { grid-area: who; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ov-bar { grid-area: bar; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .2); overflow: hidden; }
+  .ov-bar span { display: block; height: 100%; background: var(--bar); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Session Monitor</h1>
+  <span id="status">未設定</span>
+  <span id="now">--:--</span>
+  <button id="demoBtn">デモ表示</button>
+</header>
+
+<main class="grid" id="grid"></main>
+<div id="ov"></div>
+
+<details class="setup" id="setup">
+  <summary>準備と設定</summary>
+
+  <section class="sec">
+    <h2>1. データベース</h2>
+    <p>FirebaseのRealtime Databaseの URL を貼り付けてください（例: <code>https://xxxx-default-rtdb.asia-southeast1.firebasedatabase.app</code>）。</p>
+    <input type="text" id="db" placeholder="https://…firebasedatabase.app" autocomplete="off" spellcheck="false">
+    <div class="line"><button class="main" id="saveDb">保存して接続</button></div>
+    <p style="margin-top:12px">Firebase側の「ルール」には次を貼り付けてください。</p>
+<pre class="rules">{
+  "rules": {
+    "events": {
+      "$key": {
+        ".read": "$key.length >= 16",
+        ".write": "$key.length >= 16"
+      }
+    }
+  }
+}</pre>
+  </section>
+
+  <section class="sec">
+    <h2>2. イベントキー</h2>
+    <p>会議ごとの合言葉です。これを知っている端末だけが状態を読み書きできます。URLは会場スタッフ以外に公開しないでください。</p>
+    <input type="text" id="key" readonly>
+    <div class="line">
+      <button id="newKey">新しいキーを作る</button>
+      <button id="copyMon">このモニター画面のURLをコピー</button>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>3. プログラム</h2>
+    <p>Excelから次の列の順にコピーして貼り付けてください：<b>会場 ／ 開始時刻 ／ 発表者 ／ 演題 ／ 発表(分) ／ 質疑(分)</b>。後ろの2列は省略可で、空欄ならiPad側の設定時間になります。見出し行はあっても構いません。</p>
+    <textarea id="prog" spellcheck="false" placeholder="会場A&#9;10:00&#9;山田 太郎&#9;演題…&#9;12&#9;3"></textarea>
+    <div class="line">
+      <button id="check">内容を確認</button>
+      <button class="main" id="saveProg">プログラムを保存</button>
+      <span id="msg"></span>
+    </div>
+    <div class="preview" id="preview"></div>
+  </section>
+
+  <section class="sec">
+    <h2>4. 各会場のiPad</h2>
+    <p>iPadのカメラでQRを読み取り、Safariで開いたら共有 →「ホーム画面に追加」。以後はそのアイコンから起動します。プログラムを保存すると会場が表示されます。</p>
+    <div class="links" id="links"></div>
+  </section>
+  <section class="sec">
+    <h2>5. Zoom映像に重ねる（OBS）</h2>
+    <p>上の各会場の「OBS用URL」を、OBS Studioの「ブラウザ」ソースに貼り付けます。幅480・高さ150にして、その会場のZoom映像の上に置いてください。背景は透明です。</p>
+  </section>
+</details>
+
+<script>
+(function () {
+  "use strict";
+
+  var LS = "session-monitor";
+  var cfg = {};
+  try { cfg = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (e) {}
+  var q = new URLSearchParams(location.search);
+  if (q.get("key")) cfg.key = q.get("key");
+  if (q.get("db")) cfg.db = q.get("db");
+  var OV = q.get("overlay");
+  if (OV) document.documentElement.classList.add("ov");
+  function saveCfg() { try { localStorage.setItem(LS, JSON.stringify(cfg)); } catch (e) {} }
+
+  function normDb(s) {
+    s = String(s || "").trim().replace(/\/+$/, "");
+    if (s && !/^https?:\/\//.test(s)) s = "https://" + s;
+    return s;
+  }
+  function slug(s) { return String(s).trim().replace(/[.#$\[\]\/\s]+/g, "_") || "room"; }
+  function genKey() {
+    var a = new Uint8Array(15);
+    crypto.getRandomValues(a);
+    return Array.prototype.map.call(a, function (b) { return ("0" + b.toString(36)).slice(-2); }).join("");
+  }
+  function base() { return cfg.db + "/events/" + encodeURIComponent(cfg.key); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var statusEl = $("status");
+  function setStatus(text, bad) {
+    statusEl.textContent = text;
+    if (bad) statusEl.setAttribute("data-bad", ""); else statusEl.removeAttribute("data-bad");
+  }
+
+  /* ---- live data ---- */
+  var data = {}, es = null;
+  function setAt(path, value) {
+    var segs = path.split("/").filter(Boolean);
+    if (!segs.length) { data = value || {}; return; }
+    var o = data;
+    for (var i = 0; i < segs.length - 1; i++) {
+      if (typeof o[segs[i]] !== "object" || o[segs[i]] === null) o[segs[i]] = {};
+      o = o[segs[i]];
+    }
+    var last = segs[segs.length - 1];
+    if (value === null) delete o[last]; else o[last] = value;
+  }
+  /* ---- demo: fictional rooms, no network ---- */
+  var demo = false, demoTimer = null;
+  function startDemo() {
+    if (es) { es.close(); es = null; }
+    demo = true;
+    var now = Date.now(), m = 60000;
+    var names = ["Room A", "Room B", "Room C", "Room D", "Room E", "Room F", "Room G"];
+    var specs = [
+      { phase: "talk", running: true,  rem: 7 * m,  speaker: "Aiko Tanaka",  title: "Selective-area growth of GaN nanowires", late: 0 },
+      { phase: "talk", running: true,  rem: 80000,  speaker: "Kenji Sato",   title: "Strain mapping in core–shell structures", late: 4 },
+      { phase: "qa",   running: true,  rem: 2 * m,  speaker: "Maria Rossi",  title: "Nanowire lasers on silicon", late: -1 },
+      { phase: "talk", running: true,  rem: -45000, speaker: "Daniel Kim",   title: "Quantum dots for nanowire photonics", late: 9 },
+      { phase: "idle", running: false, rem: 0,      speaker: "Yuki Mori",    title: "Low-temperature VLS growth", late: 0 },
+      { phase: "talk", running: false, rem: 5 * m,  speaker: "Lucas Martin", title: "Ohmic contacts for nanowire transistors", late: 2 },
+      { phase: "talk", running: true,  rem: 6 * m,  speaker: "Hana Suzuki",  title: "Thermal transport in thin nanowires", late: 0, stale: true }
+    ];
+    function hm(t) { var d = new Date(t); return d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0"); }
+    data = { meta: { rooms: names.map(function (n) { return { id: slug(n), name: n }; }) }, rooms: {} };
+    specs.forEach(function (sp, i) {
+      var talkMs = 12 * m, qaMs = 3 * m, total = sp.phase === "qa" ? qaMs : talkMs;
+      var elapsed = sp.phase === "qa" ? talkMs + (qaMs - sp.rem) : (sp.phase === "idle" ? 0 : talkMs - sp.rem);
+      var startedAt = sp.phase === "idle" ? null : now - elapsed;
+      var sched = (startedAt || now + 2 * m) - sp.late * m;
+      data.rooms[slug(names[i])] = {
+        room: names[i], phase: sp.phase, running: sp.running,
+        deadline: sp.running ? now + sp.rem : null, left: sp.running ? null : sp.rem,
+        total: total, talkMin: 12, qaMin: 3, warnTalk: 2, warnQa: 0,
+        idx: i % 4, count: 6, time: hm(sched), speaker: sp.speaker, title: sp.title,
+        startedAt: startedAt, seen: sp.stale ? now - 3 * m : now, _stale: !!sp.stale
+      };
+    });
+    clearInterval(demoTimer);
+    demoTimer = setInterval(function () {
+      Object.keys(data.rooms).forEach(function (k) { if (!data.rooms[k]._stale) data.rooms[k].seen = Date.now(); });
+    }, 1000);
+    setStatus("デモ表示中（架空のデータ・通信なし）");
+    $("demoBtn").textContent = "デモを終了";
+    render();
+  }
+  function stopDemo() {
+    demo = false; clearInterval(demoTimer);
+    $("demoBtn").textContent = "デモ表示";
+    connect();
+  }
+
+  function connect() {
+    if (es) { es.close(); es = null; }
+    if (demo) return;
+    data = {};
+    if (!cfg.db || !cfg.key) { setStatus("未設定 — 下の「準備と設定」から始めてください", true); if (!OV) $("setup").open = true; render(); return; }
+    setStatus("接続しています…");
+    try { es = new EventSource(base() + ".json"); }
+    catch (e) { setStatus("接続できません（URLを確認）", true); return; }
+    es.addEventListener("put", function (ev) {
+      var m = JSON.parse(ev.data); setAt(m.path, m.data); setStatus("接続中"); render(); renderLinks();
+    });
+    es.addEventListener("patch", function (ev) {
+      var m = JSON.parse(ev.data);
+      Object.keys(m.data || {}).forEach(function (k) { setAt(m.path.replace(/\/$/, "") + "/" + k, m.data[k]); });
+      render(); renderLinks();
+    });
+    es.addEventListener("cancel", function () { setStatus("読み取りが拒否されました（ルールを確認）", true); });
+    es.onerror = function () { setStatus("再接続しています…", true); };
+  }
+
+  /* ---- cards ---- */
+  function roomList() {
+    var out = [], seen = {};
+    var meta = data.meta && data.meta.rooms;
+    if (meta) (Array.isArray(meta) ? meta : Object.values(meta)).forEach(function (r) {
+      if (r && !seen[r.id]) { seen[r.id] = 1; out.push(r); }
+    });
+    Object.keys(data.rooms || {}).forEach(function (id) {
+      if (!seen[id]) { seen[id] = 1; out.push({ id: id, name: (data.rooms[id] && data.rooms[id].room) || id }); }
+    });
+    return out;
+  }
+  function fmt(ms) {
+    var over = ms < 0;
+    var s = over ? Math.floor(-ms / 1000) : Math.floor((ms + 999) / 1000);
+    var m = Math.floor(s / 60), sec = s % 60;
+    return (over ? "+" : "") + m + ":" + String(sec).padStart(2, "0");
+  }
+  function hhmm(t) { var d = new Date(t); return d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0"); }
+  function ago(ms) {
+    var s = Math.max(0, Math.round(ms / 1000));
+    return s < 60 ? s + "秒前" : Math.floor(s / 60) + "分前";
+  }
+  function scheduleDelta(time, startedAt) {
+    var m = /^(\d{1,2}):(\d{2})/.exec(time || "");
+    if (!m || !startedAt) return "";
+    var d = new Date(startedAt);
+    var sched = new Date(d.getFullYear(), d.getMonth(), d.getDate(), +m[1], +m[2]).getTime();
+    var diff = Math.round((startedAt - sched) / 60000);
+    if (Math.abs(diff) < 1) return "";
+    return (diff > 0 ? "+" : "−") + Math.abs(diff) + "分";
+  }
+
+  function view(room) {
+    var r = (data.rooms || {})[room.id];
+    var now = Date.now();
+    if (!r) return { state: "idle", stale: true, chip: "未接続", time: "--:--", pct: 0, who: "—", title: "", foot: "", seen: "" };
+    var stale = !r.seen || now - r.seen > 70000;
+    var ms = r.running ? r.deadline - now : (r.left || 0);
+    var v = { stale: stale, title: r.title || "" };
+    if (r.phase === "idle") {
+      v.state = "idle"; v.chip = "待機"; v.time = fmt((r.talkMin || 0) * 60000); v.pct = 100;
+    } else {
+      var warn = (r.phase === "talk" ? r.warnTalk : r.warnQa) * 60000;
+      v.state = ms <= 0 ? "over" : (warn > 0 && ms <= warn ? "warn" : "calm");
+      v.chip = (r.phase === "talk" ? "発表中" : "質疑中") + (r.running ? "" : "（一時停止）");
+      if (ms <= 0) v.chip = (r.phase === "talk" ? "発表 超過" : "質疑 超過");
+      v.time = fmt(ms);
+      v.pct = ms <= 0 ? 100 : Math.max(0, Math.min(1, ms / (r.total || 1))) * 100;
+    }
+    if (stale) v.chip = "通信なし";
+    var foot = [];
+    if (r.count) foot.push(Math.min(r.idx + 1, r.count) + "/" + r.count);
+    if (r.time) foot.push("予定 " + esc(r.time));
+    if (r.startedAt && r.phase !== "idle") {
+      var dlt = scheduleDelta(r.time, r.startedAt);
+      foot.push("開始 " + hhmm(r.startedAt) + (dlt ? " <span class='late'>" + dlt + "</span>" : ""));
+    }
+    v.foot = foot.join(" · ");
+    v.who = r.speaker ? (r.phase === "idle" ? "次: " : "") + r.speaker : (r.count && r.idx >= r.count ? "プログラム終了" : "—");
+    v.seen = "受信 " + ago(now - (r.seen || 0));
+    return v;
+  }
+
+  function card(room) {
+    var v = view(room);
+    return "<article class='card' data-state='" + v.state + "'" + (v.stale ? " data-stale" : "") + ">" +
+      "<div class='top'><span class='room'>" + esc(room.name) + "</span><span class='chip'>" + esc(v.chip) + "</span></div>" +
+      "<div class='time'>" + v.time + "</div>" +
+      "<div class='bar'><span style='width:" + v.pct.toFixed(1) + "%'></span></div>" +
+      "<div class='who'>" + esc(v.who) + "</div>" +
+      "<div class='title'>" + esc(v.title) + "</div>" +
+      "<div class='foot'><span>" + v.foot + "</span><span>" + v.seen + "</span></div>" +
+      "</article>";
+  }
+
+  function renderOverlay() {
+    var box = $("ov"), id = slug(OV);
+    var room = roomList().filter(function (r) { return r.id === id; })[0] || { id: id, name: OV };
+    var v = view(room);
+    box.dataset.state = v.state;
+    if (v.stale) box.setAttribute("data-stale", ""); else box.removeAttribute("data-stale");
+    box.innerHTML =
+      "<div class='ov-l'><div class='ov-room'>" + esc(room.name) + "</div><div class='ov-chip'>" + esc(v.chip) + "</div></div>" +
+      "<div class='ov-time'>" + v.time + "</div>" +
+      "<div class='ov-who'>" + esc(v.who) + (v.title ? " — " + esc(v.title) : "") + "</div>" +
+      "<div class='ov-bar'><span style='width:" + v.pct.toFixed(1) + "%'></span></div>";
+  }
+
+  var grid = $("grid");
+  function render() {
+    if (OV) { renderOverlay(); return; }
+    var rooms = roomList();
+    grid.innerHTML = rooms.length ? rooms.map(card).join("") :
+      "<p style='color:var(--dim);margin:0'>まだ会場がありません。プログラムを保存するか、iPadをつなぐと表示されます。</p>";
+  }
+  setInterval(function () {
+    var d = new Date();
+    $("now").textContent = d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0") + ":" + String(d.getSeconds()).padStart(2, "0");
+    render();
+  }, 500);
+
+  /* ---- programme ---- */
+  function parseProgram(text) {
+    var rows = String(text).replace(/\r/g, "").split("\n")
+      .map(function (l) { return l.split(l.indexOf("\t") >= 0 ? "\t" : ",").map(function (c) { return c.trim(); }); })
+      .filter(function (r) { return r.some(Boolean); });
+    if (rows.length && (/会場|room/i.test(rows[0][0] || "") || /時刻|時間|time/i.test(rows[0][1] || ""))) rows.shift();
+    var order = [], map = {};
+    rows.forEach(function (r) {
+      var name = r[0];
+      if (!name) return;
+      var id = slug(name);
+      if (!map[id]) { map[id] = []; order.push({ id: id, name: name }); }
+      var tm = /^(\d{1,2}):(\d{2})/.exec(r[1] || "");
+      var e = { time: tm ? (+tm[1]) + ":" + tm[2] : (r[1] || ""), speaker: r[2] || "", title: r[3] || "" };
+      var tk = parseFloat(r[4]), qa = parseFloat(r[5]);
+      if (tk > 0) e.talk = tk;
+      if (qa >= 0) e.qa = qa;
+      map[id].push(e);
+    });
+    return { rooms: order, program: map };
+  }
+  window.__parseProgram = parseProgram;
+
+  var msg = $("msg");
+  function say(text, bad) { msg.textContent = text; if (bad) msg.setAttribute("data-bad", ""); else msg.removeAttribute("data-bad"); }
+
+  function preview() {
+    var p = parseProgram($("prog").value);
+    if (!p.rooms.length) { $("preview").innerHTML = ""; say("読み取れる行がありません", true); return null; }
+    var rows = [];
+    p.rooms.forEach(function (r) {
+      p.program[r.id].forEach(function (e, i) {
+        rows.push("<tr><td>" + (i === 0 ? esc(r.name) : "") + "</td><td>" + esc(e.time) + "</td><td>" + esc(e.speaker) +
+          "</td><td>" + esc(e.title) + "</td><td>" + (e.talk || "") + "</td><td>" + (e.qa != null ? e.qa : "") + "</td></tr>");
+      });
+    });
+    $("preview").innerHTML = "<table><tr><th>会場</th><th>時刻</th><th>発表者</th><th>演題</th><th>発表</th><th>質疑</th></tr>" + rows.join("") + "</table>";
+    var n = 0; p.rooms.forEach(function (r) { n += p.program[r.id].length; });
+    say(p.rooms.length + "会場・" + n + "件を読み取りました");
+    return p;
+  }
+
+  function put(path, body) {
+    return fetch(base() + path + ".json", { method: "PUT", body: JSON.stringify(body) })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+  }
+
+  $("check").addEventListener("click", preview);
+  $("saveProg").addEventListener("click", function () {
+    if (!cfg.db || !cfg.key) { say("先にデータベースとキーを設定してください", true); return; }
+    var p = preview();
+    if (!p) return;
+    say("保存しています…");
+    put("/program", p.program)
+      .then(function () { return put("/meta", { rooms: p.rooms, updated: { ".sv": "timestamp" } }); })
+      .then(function () { say("保存しました。各iPadには、次のリセット時か5分以内に反映されます"); })
+      .catch(function (e) { say("保存できませんでした（" + e.message + "）。URLとルールを確認してください", true); });
+  });
+
+  /* ---- links & QR ---- */
+  function timerUrl(room) {
+    var u = new URL("./", location.href);
+    u.searchParams.set("room", room.name);
+    u.searchParams.set("key", cfg.key);
+    u.searchParams.set("db", cfg.db);
+    return u.toString();
+  }
+  function overlayUrl(room) {
+    var u = new URL(location.href);
+    u.search = ""; u.hash = "";
+    u.searchParams.set("overlay", room.name);
+    u.searchParams.set("key", cfg.key);
+    u.searchParams.set("db", cfg.db);
+    return u.toString();
+  }
+  var linksDrawn = "";
+  function renderLinks() {
+    if (OV) return;
+    var box = $("links");
+    if (!cfg.db || !cfg.key) { box.innerHTML = ""; linksDrawn = ""; return; }
+    var rooms = roomList();
+    var sig = cfg.db + cfg.key + rooms.map(function (r) { return r.name; }).join("|");
+    if (sig === linksDrawn) return;
+    linksDrawn = sig;
+    box.innerHTML = "";
+    rooms.forEach(function (room) {
+      var url = timerUrl(room);
+      var div = document.createElement("div");
+      div.className = "link";
+      div.innerHTML = "<b>" + esc(room.name) + "</b><div class='qr'></div><button class='ipad'>iPad用URLをコピー</button><button class='obs'>OBS用URLをコピー</button>";
+      box.appendChild(div);
+      if (window.QRCode) {
+        try { new QRCode(div.querySelector(".qr"), { text: url, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M }); }
+        catch (e) { div.querySelector(".qr").remove(); }
+      } else {
+        div.querySelector(".qr").remove();
+      }
+      div.querySelector(".ipad").addEventListener("click", function () { copy(url, this); });
+      div.querySelector(".obs").addEventListener("click", function () { copy(overlayUrl(room), this); });
+    });
+  }
+  function copy(text, btn) {
+    var done = function () { var o = btn.textContent; btn.textContent = "コピーしました"; setTimeout(function () { btn.textContent = o; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () { prompt("コピーしてください", text); });
+    else prompt("コピーしてください", text);
+  }
+
+  /* ---- setup controls ---- */
+  $("db").value = cfg.db || "";
+  if (!cfg.key) cfg.key = genKey();
+  $("key").value = cfg.key;
+  saveCfg();
+
+  $("saveDb").addEventListener("click", function () {
+    cfg.db = normDb($("db").value);
+    $("db").value = cfg.db;
+    saveCfg(); connect(); renderLinks();
+  });
+  $("newKey").addEventListener("click", function () {
+    if (!confirm("キーを変えると、配布済みのiPadのURLは使えなくなります。作り直しますか？")) return;
+    cfg.key = genKey(); $("key").value = cfg.key; saveCfg(); connect(); renderLinks();
+  });
+  $("copyMon").addEventListener("click", function () {
+    var u = new URL(location.href);
+    u.search = "";
+    u.searchParams.set("key", cfg.key);
+    if (cfg.db) u.searchParams.set("db", cfg.db);
+    copy(u.toString(), this);
+  });
+
+  $("demoBtn").addEventListener("click", function () { if (demo) stopDemo(); else startDemo(); });
+  if (q.get("demo")) startDemo(); else connect();
+  render();
+  renderLinks();
+})();
+</script>
+</body>
+</html>
