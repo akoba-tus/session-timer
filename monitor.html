@@ -322,8 +322,11 @@
     if (meta) (Array.isArray(meta) ? meta : Object.values(meta)).forEach(function (r) {
       if (r && !seen[r.id]) { seen[r.id] = 1; out.push(r); }
     });
+    // rooms outside the programme only while they are actually reporting
     Object.keys(data.rooms || {}).forEach(function (id) {
-      if (!seen[id]) { seen[id] = 1; out.push({ id: id, name: (data.rooms[id] && data.rooms[id].room) || id }); }
+      var r = data.rooms[id];
+      if (seen[id] || !r || !r.seen || Date.now() - r.seen > 600000) return;
+      seen[id] = 1; out.push({ id: id, name: r.room || id });
     });
     return out;
   }
@@ -472,7 +475,16 @@
     say("保存しています…");
     put("/program", p.program)
       .then(function () { return put("/meta", { rooms: p.rooms, updated: { ".sv": "timestamp" } }); })
-      .then(function () { say("保存しました。各iPadには、次のリセット時か5分以内に反映されます"); })
+      .then(function () {
+        // forget status records of rooms that are no longer in the programme (e.g. test rooms)
+        var gone = Object.keys(data.rooms || {}).filter(function (id) { return !p.program[id]; });
+        return Promise.all(gone.map(function (id) {
+          return fetch(base() + "/rooms/" + encodeURIComponent(id) + ".json", { method: "DELETE" });
+        })).then(function () { return gone.length; });
+      })
+      .then(function (n) {
+        say("保存しました" + (n ? "（プログラムにない会場の記録 " + n + " 件を削除）" : "") + "。各iPadには、次のリセット時か5分以内に反映されます");
+      })
       .catch(function (e) { say("保存できませんでした（" + e.message + "）。URLとルールを確認してください", true); });
   });
 
