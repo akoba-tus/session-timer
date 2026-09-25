@@ -215,9 +215,8 @@
     </div>
     <div class="presets">
       <button data-preset="12,2,3,0"></button>
-      <button data-preset="15,3,5,1"></button>
-      <button data-preset="20,5,5,1"></button>
-      <button data-preset="8,1,2,0"></button>
+      <button data-preset="25,2,5,0"></button>
+      <button data-preset="40,2,0,0"></button>
     </div>
     <button class="done" id="close"></button>
     <p class="note" id="s-note"></p>
@@ -236,14 +235,14 @@
 <script>
 (function () {
   "use strict";
-  var VERSION = "2.1";
+  var VERSION = "2.4";
 
   var T = {
     ja: {
       ready: "準備", talk: "発表", qa: "質疑", paused: "（一時停止）",
-      plan: function (d) { return "発表 " + d.talk + " 分 ／ 質疑 " + d.qa + " 分"; },
-      qaFollow: function (d) { return "このあと質疑 " + d.qa + " 分"; },
-      talkOver: function (d) { return "時間です — 次は質疑 " + d.qa + " 分"; },
+      plan: function (d) { return "発表 " + d.talk + " 分" + (d.qa > 0 ? " ／ 質疑 " + d.qa + " 分" : ""); },
+      qaFollow: function (d) { return d.qa > 0 ? "このあと質疑 " + d.qa + " 分" : ""; },
+      talkOver: function (d) { return d.qa > 0 ? "時間です — 次は質疑 " + d.qa + " 分" : "終了してください"; },
       qaRun: "セッション最後のパートです", qaOver: "終了してください",
       start: "開始", pause: "一時停止", resume: "再開", toQa: "質疑へ", startQa: "質疑を開始",
       reset: "リセット", resetConfirm: "もう一度でリセット", settings: "設定", close: "閉じる",
@@ -300,9 +299,9 @@
     },
     en: {
       ready: "Ready", talk: "Talk", qa: "Questions", paused: " — paused",
-      plan: function (d) { return "Talk " + d.talk + " min · Questions " + d.qa + " min"; },
-      qaFollow: function (d) { return "Questions " + d.qa + " min to follow"; },
-      talkOver: function (d) { return "Time is up — questions " + d.qa + " min next"; },
+      plan: function (d) { return "Talk " + d.talk + " min" + (d.qa > 0 ? " · Questions " + d.qa + " min" : ""); },
+      qaFollow: function (d) { return d.qa > 0 ? "Questions " + d.qa + " min to follow" : ""; },
+      talkOver: function (d) { return d.qa > 0 ? "Time is up — questions " + d.qa + " min next" : "Please close the session"; },
       qaRun: "Last part of the session", qaOver: "Please close the session",
       start: "Start", pause: "Pause", resume: "Resume", toQa: "Q&A", startQa: "Start questions",
       reset: "Reset", resetConfirm: "Tap again to reset", settings: "Settings", close: "Close",
@@ -608,7 +607,7 @@
     else el.next.textContent = ms <= 0 ? t.qaOver : t.qaRun;
 
     el.fuse.style.width = (ms <= 0 ? 100 : Math.max(0, Math.min(1, ms / total)) * 100) + "%";
-    var handOver = (phase === "talk" && running && ms <= 0 && !S.auto);
+    var handOver = (phase === "talk" && running && ms <= 0 && !S.auto && d.qa > 0);
     el.go.textContent = handOver ? t.startQa : (running ? t.pause : t.resume);
     el.advance.hidden = !(phase === "talk" && ms > 0);
     el.advance.disabled = el.advance.hidden;
@@ -621,9 +620,10 @@
     if (!rangWarn && warnMs > 0 && ms <= warnMs && ms > 0) { rangWarn = true; bell(1); saveState(); }
     if (!rangEnd && ms <= 0) {
       rangEnd = true;
-      bell(phase === "talk" ? 2 : 3);
+      var noQa = (phase === "talk" && durs().qa <= 0);
+      bell(phase === "talk" && !noQa ? 2 : 3);
       saveState();
-      if (phase === "talk" && S.auto) { start("qa", -ms); return; }
+      if (phase === "talk" && S.auto && !noQa) { start("qa", -ms); return; }
     }
     paint();
   }
@@ -649,7 +649,7 @@
   el.go.addEventListener("click", function () {
     if (phase === "idle") { start("talk"); return; }
     var ms = running ? deadline - Date.now() : left;
-    if (phase === "talk" && running && ms <= 0 && !S.auto) { start("qa", -ms); return; }
+    if (phase === "talk" && running && ms <= 0 && !S.auto && durs().qa > 0) { start("qa", -ms); return; }
     if (running) { left = ms; running = false; }
     else { deadline = Date.now() + left; running = true; keepAwake(); }
     paint(); commit();

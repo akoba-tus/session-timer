@@ -33,7 +33,7 @@ The colour fills the whole screen, so a speaker notices the change out of the co
 | Discussion | 3 min |
 | End of session | three bells, then counts up in red |
 
-All of it is adjustable in the settings panel, and the values are remembered on that device. There are one-tap presets for 12+3, 15+5, 20+5 and 8+2.
+All of it is adjustable in the settings panel, and the values are remembered on that device. There are one-tap presets for 12+3, 25+5 and 40+0.
 
 ## Using it
 
@@ -119,7 +119,7 @@ MIT
 | 質疑 | 3分 |
 | 質疑終了 | ベル3回、以降は赤字でカウントアップ |
 
-いずれも設定画面から変更でき、その端末に保存されます。12＋3、15＋5、20＋5、8＋2のプリセットもあります。
+いずれも設定画面から変更でき、その端末に保存されます。12＋3、25＋5、40＋0のプリセットもあります。
 
 ## 使い方
 
