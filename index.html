@@ -44,7 +44,13 @@
   body[data-state="warn"] { --bg: #3a2a0b; --fg: #ffd98a; --bar: #e8a33d; --label: #c9a05a; }
   body[data-state="over"] { --bg: #3d0f16; --fg: #ff6f6f; --bar: #ff5a5a; --label: #d08d8d; }
 
-  .screen { height: 100%; display: grid; grid-template-rows: auto 1fr auto auto; align-items: center; }
+  .screen {
+    height: 100%; display: grid;
+    grid-template-rows: auto 1fr auto auto;
+    grid-template-columns: minmax(0, 1fr);   /* never let a long line widen the page */
+    align-items: center;
+  }
+  .stage, .strip, .desk { min-width: 0; }
   .fuse { height: 10px; width: 100%; background: rgba(244, 241, 232, .09); }
   .fuse span { display: block; height: 100%; width: 100%; background: var(--bar); transition: background-color .45s ease; }
 
@@ -235,7 +241,7 @@
 <script>
 (function () {
   "use strict";
-  var VERSION = "2.5";
+  var VERSION = "2.6";
 
   var T = {
     ja: {
