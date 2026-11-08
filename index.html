@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
+<!-- saved from url=(0168)file:///C:/Users/Atsushi%20Kobayashi/Dropbox/%E2%96%A1IWN2026/%E7%8F%BE%E5%9C%B0%E5%AE%9F%E8%A1%8C%E5%A7%94%E5%93%A1%E4%BC%9A/Timer%E3%82%A2%E3%83%97%E3%83%AA/v2.9.html -->
+<html lang="en" style="--clock-scale: 1;"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -41,6 +41,8 @@
     overflow: hidden;
     transition: background-color .45s ease, color .45s ease;
   }
+  /* discussion: its own colour, readable from the back of the room */
+  body[data-phase="qa"][data-state="calm"] { --bg: #0f6e56; --fg: #f4fff9; --bar: #c9f5e4; --label: #b7e8d5; }
   body[data-state="warn"] { --bg: #3a2a0b; --fg: #ffd98a; --bar: #e8a33d; --label: #c9a05a; }
   body[data-state="over"] { --bg: #3d0f16; --fg: #ff6f6f; --bar: #ff5a5a; --label: #d08d8d; }
 
@@ -147,20 +149,30 @@
     opacity: 0; pointer-events: none; transition: opacity .3s ease;
   }
   .toast[data-show] { opacity: 1; }
+  .wake {
+    position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 18px);
+    transform: translateX(-50%);
+    width: auto; max-width: 92%; min-height: 0; flex: none;
+    padding: 14px 24px; border-radius: 12px; border: 0;
+    background: #f4f1e8; color: #12182a;
+    font-size: clamp(1.05rem, 2.6vmin, 1.45rem); font-weight: 600;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .35);
+  }
+  .wake[hidden] { display: none; }
   .swatch { display: inline-block; width: .72em; height: .72em; border-radius: 3px; margin-right: .35em; }
 </style>
 </head>
-<body data-state="calm">
+<body data-state="calm" data-phase="idle">
 <div class="screen">
-  <div class="fuse"><span id="fuse"></span></div>
+  <div class="fuse"><span id="fuse" style="width: 100%;"></span></div>
 
   <main class="stage">
     <div class="phase" id="phase">Ready</div>
-    <div class="clock" id="clock">12:00</div>
-    <div class="next" id="next"></div>
+    <div class="clock" id="clock">40:00</div>
+    <div class="next" id="next">Talk 40 min</div>
   </main>
 
-  <div class="strip" id="strip" hidden>
+  <div class="strip" id="strip" hidden="">
     <span class="dot" id="dot"></span>
     <span class="who" id="who"></span>
     <button id="prevTalk" aria-label="Previous speaker">◀</button>
@@ -169,7 +181,7 @@
 
   <div class="desk">
     <button class="primary" id="go">Start</button>
-    <button id="advance" hidden disabled>Q&amp;A</button>
+    <button id="advance" hidden="" disabled="">Q&amp;A</button>
     <button class="ghost" id="reset">Reset</button>
     <button class="ghost" id="open">Settings</button>
     <button class="ghost icon" id="help" aria-label="Help">?</button>
@@ -177,71 +189,72 @@
 </div>
 
 <div class="toast" id="toast" role="status"></div>
+<button class="wake" id="wake" hidden=""></button>
 
 <div class="sheet" id="sheet" role="dialog" aria-modal="true">
   <div class="panel">
     <h2 id="s-title">Settings</h2>
     <div class="row">
-      <p id="s-lang"></p>
+      <p id="s-lang">Language<small>言語</small></p>
       <div class="pair">
-        <button id="lang-ja" aria-pressed="true">日本語</button>
-        <button id="lang-en" aria-pressed="false">English</button>
+        <button id="lang-ja" aria-pressed="false">日本語</button>
+        <button id="lang-en" aria-pressed="true">English</button>
       </div>
     </div>
     <div class="row">
-      <p id="s-talk"></p>
-      <div class="stepper"><button data-step="talk,-1">−</button><output id="v-talk"></output><button data-step="talk,1">＋</button></div>
+      <p id="s-talk">Talk<small>length in minutes</small></p>
+      <div class="stepper"><button data-step="talk,-1">−</button><output id="v-talk">40</output><button data-step="talk,1">＋</button></div>
     </div>
     <div class="row">
-      <p id="s-talkBell"></p>
-      <div class="stepper"><button data-step="talkBell,-1">−</button><output id="v-talkBell"></output><button data-step="talkBell,1">＋</button></div>
+      <p id="s-talkBell">Talk warning<small>minutes before the end (0 = off)</small></p>
+      <div class="stepper"><button data-step="talkBell,-1">−</button><output id="v-talkBell">2</output><button data-step="talkBell,1">＋</button></div>
     </div>
     <div class="row">
-      <p id="s-qa"></p>
-      <div class="stepper"><button data-step="qa,-1">−</button><output id="v-qa"></output><button data-step="qa,1">＋</button></div>
+      <p id="s-qa">Questions<small>length in minutes</small></p>
+      <div class="stepper"><button data-step="qa,-1">−</button><output id="v-qa">0</output><button data-step="qa,1">＋</button></div>
     </div>
     <div class="row">
-      <p id="s-qaBell"></p>
-      <div class="stepper"><button data-step="qaBell,-1">−</button><output id="v-qaBell"></output><button data-step="qaBell,1">＋</button></div>
+      <p id="s-qaBell">Questions warning<small>minutes before the end (0 = off)</small></p>
+      <div class="stepper"><button data-step="qaBell,-1">−</button><output id="v-qaBell">0</output><button data-step="qaBell,1">＋</button></div>
     </div>
     <div class="row">
-      <p id="s-size"></p>
-      <div class="stepper"><button data-step="size,-10">−</button><output id="v-size"></output><button data-step="size,10">＋</button></div>
+      <p id="s-size">Text size<small>so it reads from the back of the room</small></p>
+      <div class="stepper"><button data-step="size,-10">−</button><output id="v-size">100%</output><button data-step="size,10">＋</button></div>
     </div>
     <div class="row">
-      <p id="s-sound"></p>
+      <p id="s-sound">Bell<small>1 warning · 2 end of talk · 3 end of session</small></p>
       <div class="pair">
-        <button id="test"></button>
-        <button class="toggle" id="t-sound" aria-pressed="true"></button>
+        <button id="test">Test</button>
+        <button class="toggle" id="t-sound" aria-pressed="false">Off</button>
       </div>
     </div>
     <div class="row">
-      <p id="s-auto"></p>
-      <button class="toggle" id="t-auto" aria-pressed="true"></button>
+      <p id="s-auto">Start questions automatically<small>if off, overtime is shown until you tap Start questions</small></p>
+      <button class="toggle" id="t-auto" aria-pressed="true">Auto</button>
     </div>
     <div class="presets">
-      <button data-preset="12,2,3,0"></button>
-      <button data-preset="25,2,5,0"></button>
-      <button data-preset="40,2,0,0"></button>
+      <button data-preset="12,2,3,0,1">12+3 min</button>
+      <button data-preset="25,2,5,0,1">25+5 min</button>
+      <button data-preset="40,2,0,0,0">Plenary 40 min (no bell)</button>
     </div>
-    <button class="done" id="close"></button>
-    <p class="note" id="s-note"></p>
+    <button class="done" id="close">Close</button>
+    <p class="note" id="s-note">Settings are stored on this device. Where the programme gives a talk its own length, that length is used.</p>
   </div>
 </div>
 
 <div class="sheet" id="help-sheet" role="dialog" aria-modal="true">
   <div class="panel">
-    <h2 id="h-title"></h2>
-    <div class="manual" id="h-body"></div>
-    <button class="done" id="h-test"></button>
-    <button class="done" id="h-close"></button>
+    <h2 id="h-title">How to use</h2>
+    <div class="manual" id="h-body"><h3>Running a session</h3><ul><li><b>Start</b> begins the countdown for the talk</li><li>One bell and an amber screen warn that the end is near</li><li>Two bells at the end of the talk; the discussion timer starts automatically</li><li>Three bells at the end of the discussion, then overtime counts up in red</li><li><b>Q&amp;A</b> moves on early; the unused talk time is carried over to the discussion</li><li>Overtime is taken out of the discussion instead. Either way the slot keeps its total length</li></ul><h3>Screen colours</h3><ul><li><span class="swatch" style="background:#7fd6c2"></span>Navy — talk</li><li><span class="swatch" style="background:#0f6e56"></span>Green — questions</li><li><span class="swatch" style="background:#e8a33d"></span>Amber — nearly out of time</li><li><span class="swatch" style="background:#ff5a5a"></span>Red — time is up, counting over</li></ul><h3>Before the session</h3><ul><li>Tap <b>Ring the bell to check the volume</b> below — on iOS no sound plays until the page has been tapped once</li><li>The bell is silent if the device is on silent mode</li><li>Set auto-lock to Never. If the bell has been stopped (after the iPad slept, for example), a notice at the top asks for one tap</li></ul><h3>Also</h3><ul><li><b>Reset</b> needs two taps, so a running timer is not lost by accident</li><li>With a keyboard attached, the space bar starts and pauses</li><li>If the page is closed or reloaded by mistake, reopening it carries on where it left off</li></ul><h3>Credits</h3><p class="credit">IWN2026<br>Atsushi Kobayashi<br>MIT License<br>Keep-awake clip: NoSleep.js (MIT, Rich Tibbett)</p><p class="credit" style="margin-top:8px">v2.9</p></div>
+    <button class="done" id="h-test">Ring the bell to check the volume</button>
+    <button class="done" id="h-close">Close</button>
   </div>
 </div>
 
 <script>
 (function () {
   "use strict";
-  var VERSION = "2.6";
+  var VERSION = "2.9";
 
   var T = {
     ja: {
@@ -253,7 +266,8 @@
       start: "開始", pause: "一時停止", resume: "再開", toQa: "質疑へ", startQa: "質疑を開始",
       reset: "リセット", resetConfirm: "もう一度でリセット", settings: "設定", close: "閉じる",
       progNone: "プログラム未取得", progEnd: "プログラム終了",
-      restored: "前回の状態から再開しました（ベルを鳴らすには画面のどこかを一度タップ）",
+      restored: "前回の状態から再開しました",
+      wake: "画面をタップしてベルを有効にしてください",
       sTitle: "設定",
       lang: "言語<small>Language</small>",
       talkRow: "発表<small>持ち時間（分）</small>",
@@ -266,6 +280,7 @@
       autoRow: "質疑へ自動で移る<small>切ると「質疑を開始」を押すまで超過時間を表示</small>",
       autoOn: "自動", autoOff: "手動",
       preset: function (a, b) { return a + "＋" + b + "分"; },
+      plenary: "Plenary 40分（ベルなし）",
       test: "試聴",
       note: "設定はこの端末に保存されます。プログラムに持ち時間が書かれている発表は、そちらが優先されます。",
       hTitle: "使い方", hClose: "閉じる", hTest: "ベルを鳴らして音量を確認",
@@ -279,14 +294,15 @@
         "<li>逆に超過した分は質疑から差し引かれます。どちらの場合もセッション全体の持ち時間は変わりません</li>",
         "</ul>",
         "<h3>画面の色</h3><ul>",
-        "<li><span class='swatch' style='background:#7fd6c2'></span>紺 … 通常</li>",
+        "<li><span class='swatch' style='background:#7fd6c2'></span>紺 … 発表中</li>",
+        "<li><span class='swatch' style='background:#0f6e56'></span>緑 … 質疑中</li>",
         "<li><span class='swatch' style='background:#e8a33d'></span>琥珀 … まもなく終了</li>",
         "<li><span class='swatch' style='background:#ff5a5a'></span>赤 … 時間切れ・超過中</li>",
         "</ul>",
         "<h3>本番前の確認</h3><ul>",
         "<li>下の<b>ベルを鳴らして音量を確認</b>を一度押してください（iOSは一度タップするまで音が出ません）</li>",
         "<li>マナーモードがオンだと鳴りません</li>",
-        "<li>自動ロックを「なし」にしてください</li>",
+        "<li>自動ロックを「なし」にしてください。スリープ後などにベルが止まると、画面上部に「画面をタップしてベルを有効にしてください」と出るので、一度タップします</li>",
         "</ul>",
         "<h3>その他</h3><ul>",
         "<li><b>リセット</b>は誤操作防止のため2回タップです</li>",
@@ -301,7 +317,7 @@
           "<li><b>リセット</b>すると次の発表者に進みます。順番がずれたら ◀ ▶ で合わせてください</li>" +
           "</ul>";
       },
-      hCredit: "<h3>作者</h3><p class='credit'>IWN2026<br>Atsushi Kobayashi<br>MIT License</p>"
+      hCredit: "<h3>作者</h3><p class='credit'>IWN2026<br>Atsushi Kobayashi<br>MIT License<br>画面維持用の無音動画：NoSleep.js（MIT, Rich Tibbett）</p>"
     },
     en: {
       ready: "Ready", talk: "Talk", qa: "Questions", paused: " — paused",
@@ -312,7 +328,8 @@
       start: "Start", pause: "Pause", resume: "Resume", toQa: "Q&A", startQa: "Start questions",
       reset: "Reset", resetConfirm: "Tap again to reset", settings: "Settings", close: "Close",
       progNone: "Programme not loaded", progEnd: "End of programme",
-      restored: "Resumed where you left off (tap anywhere once to re-enable the bell)",
+      restored: "Resumed where you left off",
+      wake: "Tap the screen to turn the bell back on",
       sTitle: "Settings",
       lang: "Language<small>言語</small>",
       talkRow: "Talk<small>length in minutes</small>",
@@ -325,6 +342,7 @@
       autoRow: "Start questions automatically<small>if off, overtime is shown until you tap Start questions</small>",
       autoOn: "Auto", autoOff: "Manual",
       preset: function (a, b) { return a + "+" + b + " min"; },
+      plenary: "Plenary 40 min (no bell)",
       test: "Test",
       note: "Settings are stored on this device. Where the programme gives a talk its own length, that length is used.",
       hTitle: "How to use", hClose: "Close", hTest: "Ring the bell to check the volume",
@@ -338,14 +356,15 @@
         "<li>Overtime is taken out of the discussion instead. Either way the slot keeps its total length</li>",
         "</ul>",
         "<h3>Screen colours</h3><ul>",
-        "<li><span class='swatch' style='background:#7fd6c2'></span>Navy — running normally</li>",
+        "<li><span class='swatch' style='background:#7fd6c2'></span>Navy — talk</li>",
+        "<li><span class='swatch' style='background:#0f6e56'></span>Green — questions</li>",
         "<li><span class='swatch' style='background:#e8a33d'></span>Amber — nearly out of time</li>",
         "<li><span class='swatch' style='background:#ff5a5a'></span>Red — time is up, counting over</li>",
         "</ul>",
         "<h3>Before the session</h3><ul>",
         "<li>Tap <b>Ring the bell to check the volume</b> below — on iOS no sound plays until the page has been tapped once</li>",
         "<li>The bell is silent if the device is on silent mode</li>",
-        "<li>Set auto-lock to Never</li>",
+        "<li>Set auto-lock to Never. If the bell has been stopped (after the iPad slept, for example), a notice at the top asks for one tap</li>",
         "</ul>",
         "<h3>Also</h3><ul>",
         "<li><b>Reset</b> needs two taps, so a running timer is not lost by accident</li>",
@@ -360,7 +379,7 @@
           "<li><b>Reset</b> moves on to the next speaker. If the order slips, use ◀ ▶</li>" +
           "</ul>";
       },
-      hCredit: "<h3>Credits</h3><p class='credit'>IWN2026<br>Atsushi Kobayashi<br>MIT License</p>"
+      hCredit: "<h3>Credits</h3><p class='credit'>IWN2026<br>Atsushi Kobayashi<br>MIT License<br>Keep-awake clip: NoSleep.js (MIT, Rich Tibbett)</p>"
     }
   };
 
@@ -406,7 +425,7 @@
   var el = {};
   ["clock", "phase", "next", "fuse", "go", "advance", "reset", "open", "close", "sheet", "test",
    "s-title", "s-lang", "s-talk", "s-talkBell", "s-qa", "s-qaBell", "s-size", "s-sound", "s-auto", "s-note",
-   "t-sound", "t-auto", "lang-ja", "lang-en",
+   "t-sound", "t-auto", "lang-ja", "lang-en", "wake",
    "help", "help-sheet", "h-title", "h-body", "h-test", "h-close",
    "strip", "who", "dot", "prevTalk", "nextTalk", "toast"].forEach(function (id) { el[id] = document.getElementById(id); });
 
@@ -468,17 +487,29 @@
   }
   function commit() { saveState(); push(); }
 
-  /* ---- bell ---- */
-  var ac = null;
-  function audio() {
-    if (!ac) {
-      var Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return null;
-      ac = new Ctx();
-    }
-    if (ac.state === "suspended") ac.resume();
+  /* ---- bell ----
+     iOS puts the audio engine into an "interrupted" state when the iPad sleeps or the app is
+     left, and an old engine can stay silent even after it claims to be running again.  After
+     every return we therefore ask for one tap and build a fresh engine inside that tap. */
+  var ac = null, primed = false, lastUnlock = 0;
+  function makeCtx() {
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    try { if (ac && ac.state !== "closed") ac.close(); } catch (e) {}
+    ac = new Ctx();
+    ac.onstatechange = function () {
+      if (ac.state === "interrupted" ||
+          (ac.state === "suspended" && document.visibilityState === "visible" && Date.now() - lastUnlock > 1500)) primed = false;
+      paintWake();
+    };
     return ac;
   }
+  function audio() {
+    if (!ac) makeCtx();
+    if (ac && ac.state !== "running" && ac.state !== "closed") { try { ac.resume(); } catch (e) {} }
+    return ac;
+  }
+  function bellReady() { return !!ac && primed && ac.state !== "closed" && ac.state !== "interrupted"; }
   function strike(at) {
     var c = audio();
     if (!c) return;
@@ -494,19 +525,64 @@
       o.start(t); o.stop(t + 2);
     });
   }
-  function bell(n) { if (S.sound) for (var i = 0; i < n; i++) strike(i * 0.62); }
-  function unlock() { audio(); if (running) keepAwake(); }
-  document.addEventListener("click", unlock, true);
-  document.addEventListener("touchend", unlock, true);
+  function quiet() { var e = entry(); return !S.sound || !!(e && e.bell === false); }
+  function bell(n, force) { if (!force && quiet()) return; for (var i = 0; i < n; i++) strike(i * 0.62); }
 
-  /* ---- keep the screen on ---- */
-  var lock = null;
-  function keepAwake() {
-    if (!navigator.wakeLock || lock) return;
-    navigator.wakeLock.request("screen").then(function (l) {
-      lock = l;
-      l.addEventListener("release", function () { lock = null; });
-    }).catch(function () {});
+  // every tap, click or key press: (re)open the audio engine while the browser allows it
+  function unlock() {
+    if (!ac || ac.state === "closed" || !primed) makeCtx();
+    if (ac) {
+      try { var r = ac.resume(); if (r && r.then) r.then(paintWake, function () {}); } catch (e) {}
+      try {
+        var b = ac.createBuffer(1, 1, 22050), src = ac.createBufferSource();
+        src.buffer = b; src.connect(ac.destination); src.start(0);
+      } catch (e) {}
+    }
+    primed = true; lastUnlock = Date.now();
+    paintWake();
+    keepAwake(true);
+  }
+  document.addEventListener("touchend", unlock, true);
+  document.addEventListener("click", unlock, true);
+  document.addEventListener("keydown", unlock, true);
+
+  // a notice the timekeeper cannot miss while the bell would be silent
+  function paintWake() {
+    if (!el.wake) return;
+    var show = phase !== "idle" && !quiet() && !bellReady();
+    el.wake.hidden = !show;
+    if (show) el.wake.textContent = L().wake;
+  }
+
+  /* ---- keep the screen on ----
+     Screen Wake Lock where it works; older iPadOS ignores it in Home Screen apps, so on
+     iPad/iPhone a muted, looping 1-second video also runs (clip from NoSleep.js, MIT, Rich Tibbett). */
+  var lock = null, keepVid = null;
+  var KEEP_MP4 = "data:video/mp4;base64,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";
+  var isIOS = /iP(ad|hone|od)/.test(navigator.userAgent) ||
+              (/Macintosh/.test(navigator.userAgent) && "ontouchend" in document);
+  function keepAwake(fromGesture) {
+    if (document.visibilityState !== "visible") return;
+    if (navigator.wakeLock && !lock) {
+      navigator.wakeLock.request("screen").then(function (l) {
+        lock = l;
+        l.addEventListener("release", function () { lock = null; });
+      }).catch(function () {});
+    }
+    if (!isIOS) return;
+    if (!keepVid && fromGesture) {
+      keepVid = document.createElement("video");
+      keepVid.setAttribute("playsinline", "");
+      keepVid.setAttribute("muted", "");
+      keepVid.setAttribute("title", "keep awake");
+      keepVid.muted = true;
+      keepVid.addEventListener("loadedmetadata", function () {
+        if (keepVid.duration <= 1) keepVid.loop = true;
+        else keepVid.addEventListener("timeupdate", function () { if (keepVid.currentTime > 0.5) keepVid.currentTime = Math.random(); });
+      });
+      keepVid.src = KEEP_MP4;
+    }
+    if (keepVid && keepVid.paused) { try { var pr = keepVid.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} }
   }
 
   /* ---- reporting ---- */
@@ -562,8 +638,9 @@
     setInterval(function () { if (phase === "idle") fetchProgram(); }, 300000);
   }
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState !== "visible") return;
-    if (running) keepAwake();
+    if (document.visibilityState !== "visible") { primed = false; return; }
+    keepAwake();
+    paintWake();
     push();
     if (phase === "idle") fetchProgram();
   });
@@ -593,6 +670,7 @@
     var t = L(), d = durs();
     var ms = running ? deadline - Date.now() : left;
     paintStrip();
+    paintWake();
 
     if (phase === "idle") {
       var e = entry();
@@ -601,6 +679,7 @@
       el.next.textContent = (e && e.speaker ? e.speaker + "  ·  " : "") + t.plan(d);
       el.fuse.style.width = "100%";
       document.body.dataset.state = "calm";
+      document.body.dataset.phase = "idle";
       el.go.textContent = t.start;
       el.advance.hidden = true;
       el.advance.disabled = true;
@@ -609,6 +688,7 @@
 
     el.clock.textContent = fmt(ms);
     el.phase.textContent = (phase === "talk" ? t.talk : t.qa) + (running ? "" : t.paused);
+    document.body.dataset.phase = phase;
 
     var warnMs = (phase === "talk" ? S.talkBell : S.qaBell) * 60000;
     document.body.dataset.state = ms <= 0 ? "over" : (warnMs > 0 && ms <= warnMs ? "warn" : "calm");
@@ -735,7 +815,7 @@
     el["lang-en"].setAttribute("aria-pressed", String(S.lang === "en"));
     document.querySelectorAll("[data-preset]").forEach(function (b) {
       var p = b.dataset.preset.split(",").map(Number);
-      b.textContent = t.preset(p[0], p[2]);
+      b.textContent = p[4] === 0 ? t.plenary : t.preset(p[0], p[2]);
     });
   }
 
@@ -752,20 +832,21 @@
     b.addEventListener("click", function () {
       var p = b.dataset.preset.split(",").map(Number);
       S.talk = p[0]; S.talkBell = p[1]; S.qa = p[2]; S.qaBell = p[3];
+      if (p.length > 4) S.sound = p[4] !== 0;
       changed();
     });
   });
 
   el["lang-ja"].addEventListener("click", function () { S.lang = "ja"; changed(); });
   el["lang-en"].addEventListener("click", function () { S.lang = "en"; changed(); });
-  el["t-sound"].addEventListener("click", function () { S.sound = !S.sound; changed(); if (S.sound) bell(1); });
+  el["t-sound"].addEventListener("click", function () { S.sound = !S.sound; changed(); if (S.sound) bell(1, true); });
   el["t-auto"].addEventListener("click", function () { S.auto = !S.auto; changed(); });
-  el.test.addEventListener("click", function () { audio(); bell(1); });
+  el.test.addEventListener("click", function () { audio(); bell(1, true); });
   el.open.addEventListener("click", function () { el.sheet.setAttribute("open", ""); syncPanel(); });
   el.close.addEventListener("click", function () { el.sheet.removeAttribute("open"); });
   el.help.addEventListener("click", function () { el["help-sheet"].setAttribute("open", ""); syncPanel(); });
   el["h-close"].addEventListener("click", function () { el["help-sheet"].removeAttribute("open"); });
-  el["h-test"].addEventListener("click", function () { audio(); bell(1); });
+  el["h-test"].addEventListener("click", function () { audio(); bell(1, true); });
 
   document.addEventListener("keydown", function (e) {
     if (e.code === "Space") { e.preventDefault(); el.go.click(); }
@@ -778,7 +859,8 @@
   var resumed = applyState(local);
   syncPanel();
   paint();
-  if (resumed) { toast(L().restored); if (running) keepAwake(); }
+  keepAwake();
+  if (resumed) toast(L().restored);
 
   if (HUB) {
     // another iPad may have been running this room: take its state if it is newer
@@ -799,5 +881,6 @@
   }
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>
